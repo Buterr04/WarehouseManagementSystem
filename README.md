@@ -7,8 +7,8 @@ BACKEND: Springboot + Mybatis_Plus
 
 ## 系统需求
 JDK 17  
-VUE 3
-MySQL Database  
+VUE 3  
+MySQL Database
 
 ## 参考  
 [课程](https://www.bilibili.com/video/BV1Qe411V7TZ?p=1&vd_source=8d5101c64c259c4a82f174c9da33f943)  
