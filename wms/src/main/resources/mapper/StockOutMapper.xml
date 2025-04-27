@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dai.wms.mapper.StockOutMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.dai.wms.entity.StockOut">
+        <id column="stock_out_id" property="stockOutId" />
+        <result column="sales_order_id" property="salesOrderId" />
+        <result column="employee_id" property="employeeId" />
+        <result column="stock_out_date" property="stockOutDate" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        stock_out_id, sales_order_id, employee_id, stock_out_date
+    </sql>
+
+</mapper>

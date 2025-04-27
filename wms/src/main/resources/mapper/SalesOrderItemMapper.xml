@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dai.wms.mapper.SalesOrderItemMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.dai.wms.entity.SalesOrderItem">
+        <id column="sales_item_id" property="salesItemId" />
+        <result column="sales_order_id" property="salesOrderId" />
+        <result column="product_id" property="productId" />
+        <result column="quantity" property="quantity" />
+        <result column="sale_price" property="salePrice" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        sales_item_id, sales_order_id, product_id, quantity, sale_price
+    </sql>
+
+</mapper>
