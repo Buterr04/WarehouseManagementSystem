@@ -4,7 +4,7 @@
 
 ## 使用工具
 BACKEND: Springboot + Mybatis_Plus  
-FRONTEMD: VUE 3 + ELEMENT PLUS + ROUTER
+FRONTEND: VUE 3 + Element Plus 3 + Router
 
 ## 系统需求
 JDK 17  
