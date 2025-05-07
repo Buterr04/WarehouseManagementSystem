@@ -1,17 +1,18 @@
 package com.dai.wms.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
-import java.time.LocalDate;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import java.time.LocalDate;
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import io.swagger.annotations.ApiModel;
 
 /**
  * <p>
- * 
+ *
  * </p>
  *
  * @author dai
@@ -20,16 +21,18 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ApiModel(value="SalesOrder对象", description="")
+@TableName("sales_order") // 确保表名正确
 public class SalesOrder implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @TableId(value = "sales_order_id", type = IdType.AUTO)
+    @TableId(value = "sales_order_id")
     private Integer salesOrderId;
 
     private Integer customerId;
 
     private LocalDate saleDate;
 
+    private List<SalesOrderItem> salesOrderItems;
 
 }
