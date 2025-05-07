@@ -8,9 +8,13 @@
         <result column="sale_date" property="saleDate" />
     </resultMap>
 
-    <sql id="Base_Column_List">
-        sales_order_id, customer_id, sale_date
-    </sql>
+    <select id="list" resultMap="BaseResultMap">
+        SELECT
+            sales_order_id,
+            customer_id,
+            sale_date
+        FROM sales_order
+    </select>
 
     <insert id="insert" parameterType="com.dai.wms.entity.SalesOrder" useGeneratedKeys="true" keyProperty="salesOrderId">
         insert into sales_order (customer_id, sale_date)

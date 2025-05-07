@@ -26,7 +26,7 @@ public class Product implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @TableId (value = "product_id")
-    private String productId;
+    private Integer productId;
 
     private String productName;
 

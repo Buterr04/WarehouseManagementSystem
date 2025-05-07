@@ -35,7 +35,7 @@ public class SalesOrderController {
             if (salesOrderItems != null && !salesOrderItems.isEmpty()) {
                 for (SalesOrderItem item : salesOrderItems) {
                     item.setSalesOrderId(salesOrderId);
-                    // 假设前端传递了 salePrice，如果后端需要根据 productId 查询，则在此处理
+                    // 前端传递了 salePrice，如果后端需要根据 productId 查询，则在此处理
                     salesOrderItemService.save(item);
                 }
             }

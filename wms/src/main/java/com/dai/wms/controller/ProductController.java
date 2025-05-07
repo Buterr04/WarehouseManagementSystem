@@ -8,8 +8,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dai.wms.common.QueryPageParam;
 import com.dai.wms.common.Result;
 import com.dai.wms.entity.Product;
-import com.dai.wms.entity.Product;
-import com.dai.wms.entity.Product;
 import com.dai.wms.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
