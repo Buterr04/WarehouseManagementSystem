@@ -20,8 +20,9 @@ public class SalesOrderController {
     private SalesOrderItemService salesOrderItemService;
 
     @GetMapping("/list")
-    public List<SalesOrder> list() {
-        return salesOrderService.list();
+    public Result list() {
+        List<SalesOrder> salesOrderListWithCustomerName = salesOrderService.getSalesOrderListWithCustomerName();
+        return Result.success(salesOrderListWithCustomerName);
     }
 
     // 增

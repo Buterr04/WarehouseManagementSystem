@@ -7,7 +7,6 @@
       <el-table-column prop="salesOrderId" label="销售单 ID" width="120"></el-table-column>
       <el-table-column prop="customerName" label="客户姓名"></el-table-column>
       <el-table-column prop="saleDate" label="销售日期"></el-table-column>
-      <el-table-column prop="totalPrice" label="总价"></el-table-column>
       <el-table-column label="操作" width="150">
         <template #default="scope">
           <el-button size="small" @click="goToEditSalesOrder(scope.row.salesOrderId)">编辑</el-button>
@@ -33,8 +32,13 @@ const fetchSalesOrderList = async () => {
       const errorData = await response.json();
       throw new Error(`获取销售单列表失败: ${response.status} - ${errorData?.message || '未知错误'}`);
     }
-    const data = await response.json();
-    salesOrderList.value = data;
+    const responseData = await response.json();
+    if (responseData.code === 200) {
+      salesOrderList.value = responseData.data; // 从 data 字段中获取列表数据
+    } else {
+      ElMessage.error(`获取销售单列表失败: ${responseData.msg}`);
+      console.error('获取销售单列表失败:', responseData);
+    }
   } catch (error) {
     console.error('获取销售单列表失败:', error);
     ElMessage.error('获取销售单列表失败');
@@ -72,8 +76,14 @@ const deleteSalesOrder = (id) => {
             const errorData = await response.json();
             throw new Error(`删除销售单失败: ${response.status} - ${errorData?.message || '未知错误'}`);
           }
-          ElMessage.success('删除成功');
-          await fetchSalesOrderList(); // 刷新列表
+          const responseData = await response.json();
+          if (responseData.code === 200) {
+            ElMessage.success('删除成功');
+            await fetchSalesOrderList(); // 刷新列表
+          } else {
+            ElMessage.error(`删除销售单失败: ${responseData.msg}`);
+            console.error('删除销售单失败:', responseData);
+          }
         } catch (error) {
           console.error('删除销售单失败:', error);
           ElMessage.error('删除销售单失败');
@@ -84,6 +94,10 @@ const deleteSalesOrder = (id) => {
       });
 };
 </script>
+
+<style scoped>
+/* 可以添加一些样式 */
+</style>>
 
 <style scoped>
 /* 可以添加一些样式 */

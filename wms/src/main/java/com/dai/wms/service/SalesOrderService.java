@@ -16,5 +16,6 @@ public interface SalesOrderService extends IService<SalesOrder> {
     boolean saveSalesOrderWithItems(SalesOrder salesOrder);
     boolean updateSalesOrderWithItems(SalesOrder salesOrder);
     List<SalesOrder> list();
+    List<SalesOrder> getSalesOrderListWithCustomerName();
 
 }

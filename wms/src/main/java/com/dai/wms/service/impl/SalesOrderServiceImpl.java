@@ -17,11 +17,18 @@ import java.util.List;
 public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderMapper, SalesOrder> implements SalesOrderService {
 
     @Autowired
+    private SalesOrderMapper salesOrderMapper;
+    @Autowired
     private SalesOrderItemMapper salesOrderItemMapper;
 
     @Override
     public List<SalesOrder> list() {
         return baseMapper.selectList(null);
+    }
+
+    @Override
+    public List<SalesOrder> getSalesOrderListWithCustomerName() {
+        return salesOrderMapper.selectSalesOrderListWithCustomerName();
     }
 
     @Transactional

@@ -33,6 +33,10 @@ public class SalesOrder implements Serializable {
 
     private LocalDate saleDate;
 
+    private String customerName; // 客户名称，非数据库字段，用于前端展示
+
     private List<SalesOrderItem> salesOrderItems;
+
+
 
 }

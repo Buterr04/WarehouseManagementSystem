@@ -6,14 +6,19 @@
         <id column="sales_order_id" property="salesOrderId" />
         <result column="customer_id" property="customerId" />
         <result column="sale_date" property="saleDate" />
+        <result column="customer_name" property="customerName"/>
     </resultMap>
 
     <select id="list" resultMap="BaseResultMap">
         SELECT
-            sales_order_id,
-            customer_id,
-            sale_date
-        FROM sales_order
+            so.sales_order_id,
+            so.customer_id,
+            c.customer_name,
+            so.sale_date
+        FROM
+            sales_order so
+                JOIN
+            customer c ON so.customer_id = c.customer_id
     </select>
 
     <insert id="insert" parameterType="com.dai.wms.entity.SalesOrder" useGeneratedKeys="true" keyProperty="salesOrderId">
