@@ -97,8 +97,4 @@ const deleteSalesOrder = (id) => {
 
 <style scoped>
 /* 可以添加一些样式 */
-</style>>
-
-<style scoped>
-/* 可以添加一些样式 */
 </style>

@@ -11,6 +11,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * <p>
+ *  前端控制器
+ * </p>
+ *
+ * @author dai
+ * @since 2025-04-22
+ */
 @RestController
 @RequestMapping("/sales-order")
 public class SalesOrderController {
@@ -59,8 +67,7 @@ public class SalesOrderController {
 
         if (salesOrderUpdated) {
             Integer salesOrderId = salesOrder.getSalesOrderId();
-            // 在更新销售单时，你可能需要处理销售明细项的更新或删除逻辑
-            // 这里只是一个基本示例，你需要根据你的具体需求实现
+            // 删除旧的明细
             List<SalesOrderItem> salesOrderItems = salesOrder.getSalesOrderItems();
             if (salesOrderItems != null && !salesOrderItems.isEmpty()) {
                 for (SalesOrderItem item : salesOrderItems) {

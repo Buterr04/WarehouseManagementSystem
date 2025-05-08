@@ -38,6 +38,12 @@ const routes = [
         component: SalesOrderForm,
     },
     {
+        path: '/sales-order/edit/:id',
+        name: 'EditSalesOrder',
+        component: SalesOrderForm,
+        props: true,
+    },
+    {
         path: '/sales-management/customer-management',
         name: 'customer-management',
         component: CustomerMangement,
