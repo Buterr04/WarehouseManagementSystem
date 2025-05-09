@@ -94,10 +94,8 @@ public class SalesOrderController {
 
     // 根据销售单ID查询明细
     @GetMapping("/items/{salesOrderId}")
-    public Result getSalesOrderItems(@PathVariable Integer salesOrderId) {
-        LambdaQueryWrapper<SalesOrderItem> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(SalesOrderItem::getSalesOrderId, salesOrderId);
-        List<SalesOrderItem> items = salesOrderItemService.list(queryWrapper);
-        return Result.success(items);
+    public Result getSalesOrderItemsWithProductInfo(@PathVariable Integer salesOrderId) {
+        List<SalesOrderItem> itemsWithProductInfo = salesOrderItemService.getSalesOrderItemsWithProductInfo(salesOrderId);
+        return Result.success(itemsWithProductInfo);
     }
 }

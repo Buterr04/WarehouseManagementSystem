@@ -35,5 +35,10 @@ public class SalesOrderItem implements Serializable {
 
     private BigDecimal salePrice;
 
+    private String productName; // 产品名称，非数据库字段，用于前端展示
+
+    private String specifications; // 规格，非数据库字段，用于前端展示
+
+
 
 }
