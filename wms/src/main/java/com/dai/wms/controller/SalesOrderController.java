@@ -67,12 +67,17 @@ public class SalesOrderController {
 
         if (salesOrderUpdated) {
             Integer salesOrderId = salesOrder.getSalesOrderId();
-            // 删除旧的明细
             List<SalesOrderItem> salesOrderItems = salesOrder.getSalesOrderItems();
             if (salesOrderItems != null && !salesOrderItems.isEmpty()) {
+                // 先删除与该销售单关联的所有现有明细项
+                LambdaQueryWrapper<SalesOrderItem> queryWrapper = new LambdaQueryWrapper<>();
+                queryWrapper.eq(SalesOrderItem::getSalesOrderId, salesOrderId);
+                salesOrderItemService.remove(queryWrapper);
+
+                // 然后保存前端传递过来的新明细项
                 for (SalesOrderItem item : salesOrderItems) {
                     item.setSalesOrderId(salesOrderId);
-                    salesOrderItemService.saveOrUpdate(item); // 使用 saveOrUpdate
+                    salesOrderItemService.save(item);
                 }
             }
             return Result.success();

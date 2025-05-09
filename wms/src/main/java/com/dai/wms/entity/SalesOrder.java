@@ -1,6 +1,7 @@
 package com.dai.wms.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
@@ -35,6 +36,7 @@ public class SalesOrder implements Serializable {
 
     private String customerName; // 客户名称，非数据库字段，用于前端展示
 
+    @TableField(exist = false)
     private List<SalesOrderItem> salesOrderItems;
 
 
