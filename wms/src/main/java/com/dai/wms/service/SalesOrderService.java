@@ -18,4 +18,6 @@ public interface SalesOrderService extends IService<SalesOrder> {
     List<SalesOrder> list();
     List<SalesOrder> getSalesOrderListWithCustomerName();
 
+    SalesOrder findByIdWithCustomer(Integer salesOrderId);
+
 }

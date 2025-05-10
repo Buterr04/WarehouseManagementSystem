@@ -22,7 +22,7 @@ import io.swagger.annotations.ApiModel;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ApiModel(value="SalesOrder对象", description="")
-@TableName("sales_order") // 确保表名正确
+@TableName("sales_order")
 public class SalesOrder implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -34,6 +34,7 @@ public class SalesOrder implements Serializable {
 
     private LocalDate saleDate;
 
+    @TableField(exist = false)
     private String customerName; // 客户名称，非数据库字段，用于前端展示
 
     @TableField(exist = false)

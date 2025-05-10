@@ -31,6 +31,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderMapper, SalesOr
         return salesOrderMapper.selectSalesOrderListWithCustomerName();
     }
 
+    @Override
+    public SalesOrder findByIdWithCustomer(Integer salesOrderId) {
+        return salesOrderMapper.selectSalesOrderByIdWithCustomer(salesOrderId);
+    }
+
+
     @Transactional
     @Override
     public boolean saveSalesOrderWithItems(SalesOrder salesOrder) {
