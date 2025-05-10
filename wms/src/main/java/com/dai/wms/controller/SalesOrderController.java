@@ -92,6 +92,17 @@ public class SalesOrderController {
         return salesOrderService.saveOrUpdate(salesOrder);
     }
 
+    // 根据ID查询
+    @GetMapping("/{salesOrderId}")
+    public Result getSalesOrder(@PathVariable Integer salesOrderId) {
+        SalesOrder salesOrder = salesOrderService.findById(salesOrderId);
+        if (salesOrder != null) {
+            return Result.success(salesOrder);
+        } else {
+            return Result.fail();
+        }
+    }
+
     // 根据销售单ID查询明细
     @GetMapping("/items/{salesOrderId}")
     public Result getSalesOrderItemsWithProductInfo(@PathVariable Integer salesOrderId) {

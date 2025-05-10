@@ -34,6 +34,7 @@ public class SalesOrder implements Serializable {
 
     private LocalDate saleDate;
 
+    @TableField(exist = false)
     private String customerName; // 客户名称，非数据库字段，用于前端展示
 
     @TableField(exist = false)
