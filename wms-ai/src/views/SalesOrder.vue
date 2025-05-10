@@ -7,23 +7,64 @@
       <el-table-column prop="salesOrderId" label="销售单 ID" width="120"></el-table-column>
       <el-table-column prop="customerName" label="客户姓名"></el-table-column>
       <el-table-column prop="saleDate" label="销售日期"></el-table-column>
-      <el-table-column label="操作" width="150">
+      <el-table-column label="操作" width="200">
         <template #default="scope">
+          <el-button size="small" @click="viewSalesOrderDetails(scope.row.salesOrderId)">查看</el-button>
           <el-button size="small" @click="goToEditSalesOrder(scope.row.salesOrderId)">编辑</el-button>
           <el-button size="small" type="danger" @click="deleteSalesOrder(scope.row.salesOrderId)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
+
+    <el-dialog v-model="dialogVisible" title="销售单明细" width="60%">
+      <el-table :data="salesOrderDetails" style="width: 100%">
+        <el-table-column prop="productName" label="商品名称(规格)">
+          <template #default="scope">
+            {{ scope.row.productName }} {{ scope.row.specifications ? `(${scope.row.specifications})` : '' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="quantity" label="数量"></el-table-column>
+        <el-table-column prop="salePrice" label="销售单价">
+          <template #default="scope">
+            {{ formatCurrency(scope.row.salePrice) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="小计">
+          <template #default="scope">
+            {{ formatCurrency(scope.row.quantity * scope.row.salePrice) }}
+          </template>
+        </el-table-column>
+      </el-table>
+      <div style="text-align: right; margin-top: 10px;">
+        总价: <strong style="font-size: 1.2em;">{{ formatCurrency(totalPrice) }}</strong>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogVisible = false">关闭</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { ElMessage, ElMessageBox } from 'element-plus'; // 引入 ElMessageBox
+import { ElMessage, ElMessageBox, ElDialog } from 'element-plus'; // 确保引入 ElDialog
 
 const router = useRouter();
 const salesOrderList = ref([]);
+const dialogVisible = ref(false); // 控制弹窗显示隐藏的变量
+const salesOrderDetails = ref([]); // 存储销售单明细数据的变量
+const currentSalesOrderId = ref(null); // 存储当前查看的销售单ID
+
+const totalPrice = computed(() => {
+  return salesOrderDetails.value.reduce((sum, item) => sum + item.quantity * item.salePrice, 0);
+});
+
+const formatCurrency = (price) => {
+  return price ? `¥ ${price.toFixed(2)}` : '¥ 0.00';
+};
 
 const fetchSalesOrderList = async () => {
   try {
@@ -42,6 +83,31 @@ const fetchSalesOrderList = async () => {
   } catch (error) {
     console.error('获取销售单列表失败:', error);
     ElMessage.error('获取销售单列表失败');
+  }
+};
+
+const fetchSalesOrderDetailsForView = async (id) => {
+  if (id) {
+    try {
+      const response = await fetch(`http://localhost:8090/sales-order/items/${id}`); // 直接访问获取明细条目的 API
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`获取销售单明细失败: ${response.status} - ${errorData?.message || '未知错误'}`);
+      }
+      const responseData = await response.json();
+      if (responseData.code === 200 && responseData.data) {
+        salesOrderDetails.value = responseData.data;
+      } else {
+        ElMessage.error(`获取销售单明细失败: ${responseData.msg}`);
+        salesOrderDetails.value = []; // 清空明细数据
+      }
+    } catch (error) {
+      console.error('获取销售单明细失败:', error);
+      ElMessage.error('获取销售单明细失败');
+      salesOrderDetails.value = []; // 清空明细数据
+    }
+  } else {
+    salesOrderDetails.value = []; // 如果没有 ID，清空明细数据
   }
 };
 
@@ -93,8 +159,14 @@ const deleteSalesOrder = (id) => {
         ElMessage.info('已取消删除');
       });
 };
+
+const viewSalesOrderDetails = (id) => {
+  currentSalesOrderId.value = id;
+  fetchSalesOrderDetailsForView(id); // 调用获取明细方法
+  dialogVisible.value = true;
+};
 </script>
 
 <style scoped>
-/* 可以添加一些样式 */
+
 </style>

@@ -8,6 +8,7 @@ import SalesOrder from '../views/SalesOrder.vue';
 import HomePage from '../views/HomePage.vue';
 import SalesOrderForm from '../views/SalesOrderForm.vue'
 import CustomerMangement from "@/views/CustomerMangement.vue";
+import SalesOrderModify from "@/views/SalesOrderModify.vue";
 
 const routes = [
     { path: '/', name: 'home', component: HomePage }, // 将根路径指向 HomePage
@@ -40,7 +41,7 @@ const routes = [
     {
         path: '/sales-order/edit/:id',
         name: 'EditSalesOrder',
-        component: SalesOrderForm,
+        component: SalesOrderModify,
         props: true,
     },
     {
