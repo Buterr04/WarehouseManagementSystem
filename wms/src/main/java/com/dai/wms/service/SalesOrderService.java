@@ -17,8 +17,6 @@ public interface SalesOrderService extends IService<SalesOrder> {
     boolean updateSalesOrderWithItems(SalesOrder salesOrder);
     List<SalesOrder> list();
     List<SalesOrder> getSalesOrderListWithCustomerName();
-    SalesOrder findById(Integer salesOrderId);
-
     SalesOrder findByIdWithCustomer(Integer salesOrderId);
 
 }
