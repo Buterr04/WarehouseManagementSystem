@@ -39,7 +39,13 @@ Works with Google Gemini Advanced AI
     ```
 3.  **运行后端项目**
 
-    在IDEA或者任何你熟悉的IDE中打开```wms```文件夹作为maven项目文件夹，选择```WmsApplication.java```运行
+    在IDEA或者任何你熟悉的IDE中打开```wms```文件夹作为maven项目文件夹
+
+    根据项目创建正确的数据库
+
+    修改```application.yml```符合本地数据库设置
+    
+    选择```WmsApplication.java```运行
 
     不要忘记刷新```Maven```依赖
 
