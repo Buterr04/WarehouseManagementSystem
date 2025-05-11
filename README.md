@@ -41,7 +41,7 @@ Works with Google Gemini Advanced AI
 
     在IDEA或者任何你熟悉的IDE中打开```wms```文件夹作为maven项目文件夹
 
-    根据项目创建正确的数据库
+    使用```database.db```在本地创建数据库
 
     修改```application.yml```符合本地数据库设置
     
