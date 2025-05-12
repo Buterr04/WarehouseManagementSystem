@@ -1,16 +1,34 @@
 <template>
   <div>
     <h1>出库管理</h1>
-    <el-button type="primary" @click="createOutboundOrder">创建出库单</el-button>
+    <div style="margin-bottom: 10px;">
+      <el-input v-model="searchForm.stockOutId" placeholder="按出库单号搜索" clearable style="width: 180px; margin-right: 10px;"></el-input>
+      <el-date-picker v-model="searchForm.stockOutDate" type="date" placeholder="按出库日期搜索" clearable style="width: 180px; margin-right: 10px;"></el-date-picker>
+      <el-select v-model="searchForm.status" placeholder="按处理状态搜索" clearable style="width: 180px; margin-right: 10px;">
+        <el-option label="待处理" :value="0"></el-option>
+        <el-option label="已出库" :value="1"></el-option>
+        <el-option label="缺货" :value="2"></el-option>
+      </el-select>
+      <el-button @click="fetchOutboundOrderList">查询</el-button>
+      <el-button type="primary" @click="createOutboundOrder">创建出库单</el-button>
+    </div>
 
     <el-table :data="outboundOrderList" style="width: 100%">
       <el-table-column prop="stockOutId" label="出库单号" width="120"></el-table-column>
-      <el-table-column prop="salesOrderId" label="销售单号" width="120"></el-table-column>
-      <el-table-column prop="stockOutDate" label="出库日期" width="150"></el-table-column>
-      <el-table-column prop="employeeId" label="操作员 ID" width="120"></el-table-column>
+      <el-table-column prop="salesOrderId" label="关联销售单号" width="120"></el-table-column>
+      <el-table-column prop="saleDate" label="销售日期" width="150"></el-table-column>
+      <el-table-column prop="stockOutDate" label="出库日期"></el-table-column>
+      <el-table-column prop="statusText" label="出库状态"></el-table-column>
+      <el-table-column label="操作" width="200">
+        <template #default="scope">
+          <el-button size="small" @click="viewOutboundDetails(scope.row.stockOutId)">查看</el-button>
+          <el-button size="small" @click="handleOutbound(scope.row)">处理</el-button>
+          <el-button size="small" type="danger" @click="deleteOutbound(scope.row.StockOutId)">删除</el-button>
+        </template>
+      </el-table-column>
     </el-table>
 
-    <el-dialog v-model="createOutboundDialogVisible" title="创建出库单" width="80%">
+    <el-dialog v-model="createOutboundDialogVisible" title="关联销售单创建出库单" width="80%">
       <el-table :data="salesOrderList" style="width: 100%">
         <el-table-column prop="salesOrderId" label="销售单号" width="120"></el-table-column>
         <el-table-column prop="saleDate" label="销售日期" width="150"></el-table-column>
@@ -62,12 +80,18 @@ import { ElMessage } from 'element-plus';
 
 const router = useRouter();
 const outboundOrderList = ref([]);
+const outboundDetails = ref([]);
 const salesOrderList = ref([]);
 const createOutboundDialogVisible = ref(false);
 const outboundFormVisible = ref(false);
 const outboundForm = ref({
   salesOrderId: null,
   items: [],
+});
+const searchForm = ref({
+  stockOutId: '',
+  stockOutDate: null,
+  status: null,
 });
 
 const fetchOutboundOrderList = async () => {
@@ -77,23 +101,42 @@ const fetchOutboundOrderList = async () => {
       const errorData = await response.json();
       throw new Error(`获取出库单列表失败: ${response.status} - ${errorData?.message || '未知错误'}`);
     }
-    const data = await response.json().then(res => res.data);
-    outboundOrderList.value = data;
+    const responseData = await response.json().then(res => res.data);
+    outboundOrderList.value = responseData.map(order => ({ ...order, statusText: getStatusText(order.status) }));
   } catch (error) {
     console.error('获取出库单列表失败:', error);
     ElMessage.error('获取出库单列表失败');
   }
 };
 
+const fetchOutboundDetails = async (stockOutId) => {
+  try {
+    const response = await fetch(`http://localhost:8090/stock-out/details/${stockOutId}`);
+    const responseData = await response.json();
+    outboundDetails.value = responseData.data || [];
+  } catch (error) {
+    ElMessage.error('获取出库单明细失败');
+  }
+};
+
+const viewOutboundDetails = (stockOutId) => {
+  fetchOutboundDetails(stockOutId);
+};
+
 const fetchSalesOrderList = async () => {
   try {
-    const response = await fetch('http://localhost:8090/sales-order/list-with-customer'); // 替换为你的实际 API 端点 (需要包含客户姓名)
+    const response = await fetch('http://localhost:8090/sales-order/list'); // 替换为你的实际 API 端点
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(`获取销售单列表失败: ${response.status} - ${errorData?.message || '未知错误'}`);
     }
-    const data = await response.json().then(res => res.data);
-    salesOrderList.value = data;
+    const responseData = await response.json();
+    if (responseData.code === 200) {
+      salesOrderList.value = responseData.data; // 从 data 字段中获取列表数据
+    } else {
+      ElMessage.error(`获取销售单列表失败: ${responseData.msg}`);
+      console.error('获取销售单列表失败:', responseData);
+    }
   } catch (error) {
     console.error('获取销售单列表失败:', error);
     ElMessage.error('获取销售单列表失败');
@@ -142,12 +185,20 @@ const processOutbound = async () => {
   }
 
   try {
+    const payload = {
+      salesOrderId: outboundForm.value.salesOrderId,
+      employeeId: 3, // TODO: 获取当前登录员工的 ID
+      stockOutItems: outboundForm.value.items.map(item => ({
+        productId: item.productId,
+        quantity: item.outboundQuantity,
+      })),
+    };
     const response = await fetch('http://localhost:8090/stock-out/save', { // 替换为你的实际 API 端点
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(outboundForm.value),
+      body: JSON.stringify(payload),
     });
     if (!response.ok) {
       const errorData = await response.json();
@@ -157,12 +208,20 @@ const processOutbound = async () => {
     outboundFormVisible.value = false;
     await fetchOutboundOrderList(); // 刷新出库单列表
   } catch (error) {
-    console.error('出库处理失败:',error);
+    console.error('出库处理失败:', error);
     ElMessage.error('出库处理失败');
   }
 };
-</script>
 
-<style scoped>
-/* 可以添加一些样式 */
-</style>
+const getStatusText = (status) => {
+  // TODO: 根据实际状态值返回对应的文本
+  return status === 0 ? '待处理' : status === 1 ? '已出库' : '缺货';
+};
+
+const handleOutbound = (row) => {
+  outboundForm.value.salesOrderId = row.salesOrderId;
+  fetchSalesOrderItems(row.salesOrderId);
+  outboundFormVisible.value = true;
+};
+
+</script>
