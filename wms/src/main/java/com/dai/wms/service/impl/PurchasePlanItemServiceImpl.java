@@ -4,7 +4,10 @@ import com.dai.wms.entity.PurchasePlanItem;
 import com.dai.wms.mapper.PurchasePlanItemMapper;
 import com.dai.wms.service.PurchasePlanItemService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * <p>
@@ -17,4 +20,16 @@ import org.springframework.stereotype.Service;
 @Service
 public class PurchasePlanItemServiceImpl extends ServiceImpl<PurchasePlanItemMapper, PurchasePlanItem> implements PurchasePlanItemService {
 
+    @Autowired
+    private PurchasePlanItemMapper purchasePlanItemMapper;
+
+    @Override
+    public List<PurchasePlanItem> getPurchasePlanItemsByPurchasePlanId(Integer purchasePlanId) {
+        return purchasePlanItemMapper.selectPurchasePlanItemsByPlanId(purchasePlanId);
+    }
+
+    @Override
+    public List<PurchasePlanItem> getPurchasePlanItemsWithProductInfo(Integer purchasePlanId) {
+        return purchasePlanItemMapper.selectPurchasePlanItemsWithProductInfo(purchasePlanId); // 新增方法的实现
+    }
 }
