@@ -34,5 +34,7 @@ public class Product implements Serializable {
 
     private BigDecimal unitPrice;
 
+    private Integer stockQuantity;
+
 
 }

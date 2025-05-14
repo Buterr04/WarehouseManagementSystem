@@ -18,7 +18,7 @@ import java.util.List;
  */
 @Mapper
 public interface StockOutItemMapper extends BaseMapper<StockOutItem> {
-    @Select("SELECT soi.stock_out_item_id, soi.stock_out_id, soi.product_id, p.product_name, p.specifications, soi.quantity " +
+    @Select("SELECT soi.stock_out_item_id, soi.stock_out_id, soi.product_id, p.product_name, p.specifications, p.stock_quantity, soi.quantity " +
             "FROM stock_out_item soi " +
             "JOIN product p ON soi.product_id = p.product_id " +
             "WHERE soi.stock_out_id = #{stockOutId}")
