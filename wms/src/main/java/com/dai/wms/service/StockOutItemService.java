@@ -3,6 +3,8 @@ package com.dai.wms.service;
 import com.dai.wms.entity.StockOutItem;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+import java.util.List;
+
 /**
  * <p>
  *  服务类
@@ -13,4 +15,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface StockOutItemService extends IService<StockOutItem> {
 
+    List<StockOutItem> getStockOutItemsWithProductInfo(Integer stockOutId);
 }
