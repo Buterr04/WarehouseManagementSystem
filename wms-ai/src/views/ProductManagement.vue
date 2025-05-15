@@ -18,7 +18,7 @@
       <el-button type="primary" @click="openDialog">添加商品</el-button>
     </div>
 
-    <el-table :data="filteredProductList" style="width: 100%">
+    <el-table :data="paginatedProductList" style="width: 100%">
       <el-table-column prop="productId" label="ID" width="80"></el-table-column>
       <el-table-column prop="productName" label="商品名称"></el-table-column>
       <el-table-column prop="specifications" label="商品规格"></el-table-column>
@@ -30,6 +30,17 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <!-- 分页控件 -->
+    <el-pagination
+        background
+        layout="prev, pager, next"
+        :current-page="currentPage"
+        :page-size="pageSize"
+        :total="filteredProductList.length"
+        @current-change="handlePageChange"
+        style="margin-top: 20px; text-align: right;"
+    />
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="30%">
       <el-form :model="form" label-width="80px">
@@ -72,6 +83,11 @@ const searchQuery = ref({
   specifications: '',
 });
 
+// 分页变量
+const currentPage = ref(1);
+const pageSize = ref(10);
+
+// 获取商品数据
 const fetchProductList = async () => {
   try {
     const response = await fetch('http://localhost:8090/product/list');
@@ -90,6 +106,7 @@ onMounted(() => {
   fetchProductList();
 });
 
+// 过滤搜索
 const filteredProductList = computed(() => {
   return productList.value.filter(product => {
     if (product && product.productName && product.specifications) {
@@ -97,13 +114,23 @@ const filteredProductList = computed(() => {
       const specMatch = product.specifications.toLowerCase().includes(searchQuery.value.specifications.toLowerCase());
       return nameMatch && specMatch;
     }
-    return false; // 如果 product 或其关键属性不存在，则不匹配
+    return false;
   });
 });
 
+// 分页计算
+const paginatedProductList = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return filteredProductList.value.slice(start, end);
+});
+
+const handlePageChange = (page) => {
+  currentPage.value = page;
+};
+
 const handleSearch = () => {
-  // 这里我们直接使用前端过滤，你也可以选择在点击搜索按钮时调用后端模糊查询接口
-  // 如果选择调用后端，你需要实现 performFuzzySearch 函数 (如之前的示例)
+  currentPage.value = 1; // 搜索后回第一页
 };
 
 const openDialog = () => {
@@ -115,7 +142,12 @@ const openDialog = () => {
 
 const editItem = (row) => {
   dialogTitle.value = '编辑商品';
-  form.value = { id: row.productId, name: row.productName, category: row.specifications, unit: row.unitPrice };
+  form.value = {
+    id: row.productId,
+    name: row.productName,
+    category: row.specifications,
+    unit: row.unitPrice,
+  };
   editingId.value = row.productId;
   dialogVisible.value = true;
 };
@@ -145,13 +177,12 @@ const saveItem = async () => {
       specifications: form.value.category,
       unitPrice: form.value.unit,
     };
-    const method = editingId.value ? 'POST' : 'POST';
     const url = editingId.value
         ? 'http://localhost:8090/product/modify'
         : 'http://localhost:8090/product/save';
 
     const response = await fetch(url, {
-      method: method,
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -165,14 +196,12 @@ const saveItem = async () => {
 
     const newData = await response.json();
     if (editingId.value) {
-      // 更新
       const index = productList.value.findIndex(item => item.productId === editingId.value);
       if (index !== -1) {
         productList.value[index] = newData;
       }
       ElMessage.success('更新成功');
     } else {
-      // 添加
       productList.value = [...productList.value, newData];
       ElMessage.success('添加成功');
     }

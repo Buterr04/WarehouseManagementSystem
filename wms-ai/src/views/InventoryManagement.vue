@@ -18,7 +18,7 @@
       <el-button type="primary" @click="openDialog">添加商品</el-button>
     </div>
 
-    <el-table :data="filteredProductList" style="width: 100%">
+    <el-table :data="paginatedProductList" style="width: 100%">
       <el-table-column prop="productId" label="ID" width="80"></el-table-column>
       <el-table-column prop="productName" label="商品名称"></el-table-column>
       <el-table-column prop="specifications" label="商品规格"></el-table-column>
@@ -31,6 +31,18 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <!-- ✅ 分页控件自动贴底 -->
+    <div style="text-align: right; margin-top: 20px; padding: 10px 20px;">
+      <el-pagination
+          background
+          layout="prev, pager, next"
+          :current-page="currentPage"
+          :page-size="pageSize"
+          :total="filteredProductList.length"
+          @current-change="handlePageChange"
+      />
+    </div>
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="30%">
       <el-form :model="form" label-width="80px">
@@ -69,6 +81,7 @@ const form = ref({
   name: '',
   category: '',
   unit: '',
+  stockQuantity: '',
 });
 const editingId = ref(null);
 const searchQuery = ref({
@@ -76,12 +89,15 @@ const searchQuery = ref({
   specifications: '',
 });
 
+// 分页变量
+const currentPage = ref(1);
+const pageSize = ref(10);
+
+// 获取商品列表
 const fetchProductList = async () => {
   try {
     const response = await fetch('http://localhost:8090/product/list');
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     productList.value = data;
   } catch (error) {
@@ -94,6 +110,7 @@ onMounted(() => {
   fetchProductList();
 });
 
+// 搜索过滤
 const filteredProductList = computed(() => {
   return productList.value.filter(product => {
     if (product && product.productName && product.specifications) {
@@ -101,15 +118,26 @@ const filteredProductList = computed(() => {
       const specMatch = product.specifications.toLowerCase().includes(searchQuery.value.specifications.toLowerCase());
       return nameMatch && specMatch;
     }
-    return false; // 如果 product 或其关键属性不存在，则不匹配
+    return false;
   });
 });
 
-const handleSearch = () => {
-  // 这里我们直接使用前端过滤，你也可以选择在点击搜索按钮时调用后端模糊查询接口
-  // 如果选择调用后端，你需要实现 performFuzzySearch 函数 (如之前的示例)
+// 分页处理
+const paginatedProductList = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return filteredProductList.value.slice(start, end);
+});
+const handlePageChange = (page) => {
+  currentPage.value = page;
 };
 
+// 搜索按钮（此处只是前端过滤）
+const handleSearch = () => {
+  currentPage.value = 1; // 搜索后回到第一页
+};
+
+// 打开添加商品对话框
 const openDialog = () => {
   dialogTitle.value = '添加商品';
   form.value = { id: null, name: '', category: '', unit: '', stockQuantity: '' };
@@ -117,13 +145,21 @@ const openDialog = () => {
   dialogVisible.value = true;
 };
 
+// 编辑商品
 const editItem = (row) => {
   dialogTitle.value = '编辑商品';
-  form.value = { id: row.productId, name: row.productName, category: row.specifications, unit: row.unitPrice, stockQuantity: row.stockQuantity };
+  form.value = {
+    id: row.productId,
+    name: row.productName,
+    category: row.specifications,
+    unit: row.unitPrice,
+    stockQuantity: row.stockQuantity,
+  };
   editingId.value = row.productId;
   dialogVisible.value = true;
 };
 
+// 删除商品
 const deleteItem = async (row) => {
   try {
     const response = await fetch(`http://localhost:8090/product/delete?id=${row.productId}`, {
@@ -141,6 +177,7 @@ const deleteItem = async (row) => {
   }
 };
 
+// 保存商品
 const saveItem = async () => {
   try {
     const payload = {
@@ -150,16 +187,14 @@ const saveItem = async () => {
       unitPrice: form.value.unit,
       stockQuantity: form.value.stockQuantity,
     };
-    const method = editingId.value ? 'POST' : 'POST';
+    const method = 'POST';
     const url = editingId.value
         ? 'http://localhost:8090/product/modify'
         : 'http://localhost:8090/product/save';
 
     const response = await fetch(url, {
-      method: method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      method,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
@@ -170,20 +205,16 @@ const saveItem = async () => {
 
     const newData = await response.json();
     if (editingId.value) {
-      // 更新
       const index = productList.value.findIndex(item => item.productId === editingId.value);
-      if (index !== -1) {
-        productList.value[index] = newData;
-      }
+      if (index !== -1) productList.value[index] = newData;
       ElMessage.success('更新成功');
     } else {
-      // 添加
       productList.value = [...productList.value, newData];
       ElMessage.success('添加成功');
     }
 
     dialogVisible.value = false;
-    form.value = { id: null, name: '', category: '', unit: '' };
+    form.value = { id: null, name: '', category: '', unit: '', stockQuantity: '' };
     editingId.value = null;
     await fetchProductList();
   } catch (error) {

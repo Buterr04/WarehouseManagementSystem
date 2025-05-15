@@ -18,7 +18,7 @@
       <el-button type="primary" @click="openDialog">添加客户</el-button>
     </div>
 
-    <el-table :data="filteredCustomerList" style="width: 100%">
+    <el-table :data="paginatedCustomerList" style="width: 100%">
       <el-table-column prop="customerId" label="ID" width="80"></el-table-column>
       <el-table-column prop="customerName" label="客户名称"></el-table-column>
       <el-table-column prop="contactPhone" label="联系电话"></el-table-column>
@@ -30,6 +30,16 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <el-pagination
+        background
+        layout="prev, pager, next"
+        :total="filteredCustomerList.length"
+        :page-size="pageSize"
+        :current-page="currentPage"
+        @current-change="handlePageChange"
+        style="margin-top: 20px; text-align: right;"
+    />
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="30%">
       <el-form :model="form" :rules="formRules" ref="formRef" label-width="80px">
@@ -53,20 +63,16 @@
   </div>
 </template>
 
+
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { ElMessage } from 'element-plus';
 
-const customerList = ref([]); // 客户列表数据
-const dialogVisible = ref(false); // 控制对话框显示/隐藏
-const dialogTitle = ref('添加客户'); // 对话框标题
-const form = ref({ // 表单数据对象
-  customerId: null,
-  customerName: '',
-  contactPhone: '',
-  contactAddress: '',
-});
-const formRules = ref({ // 表单验证规则
+const customerList = ref([]);
+const dialogVisible = ref(false);
+const dialogTitle = ref('添加客户');
+const form = ref({ customerId: null, customerName: '', contactPhone: '', contactAddress: '' });
+const formRules = ref({
   customerName: [{ required: true, message: '客户名称不能为空', trigger: 'blur' }],
   contactPhone: [
     { required: true, message: '联系电话不能为空', trigger: 'blur' },
@@ -78,20 +84,17 @@ const formRules = ref({ // 表单验证规则
   ],
   contactAddress: [{ required: true, message: '联系地址不能为空', trigger: 'blur' }],
 });
-const formRef = ref(null); // 用于获取表单组件实例，方便进行验证和重置
-const editingId = ref(null); // 正在编辑的客户ID
-const searchQuery = ref({ // 搜索条件
-  customerName: '',
-  contactPhone: '',
-});
+const formRef = ref(null);
+const editingId = ref(null);
+const searchQuery = ref({ customerName: '', contactPhone: '' });
 
-// 获取客户列表数据
+const currentPage = ref(1);
+const pageSize = ref(9);
+
 const fetchCustomerList = async () => {
   try {
     const response = await fetch('http://localhost:8090/customer/list');
-    if (!response.ok) {
-      throw new Error(`HTTP 错误! 状态码: ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`HTTP 错误! 状态码: ${response.status}`);
     const data = await response.json();
     customerList.value = data;
   } catch (error) {
@@ -100,12 +103,10 @@ const fetchCustomerList = async () => {
   }
 };
 
-// 组件挂载后获取客户列表
 onMounted(() => {
   fetchCustomerList();
 });
 
-// 计算属性：根据搜索条件过滤客户列表
 const filteredCustomerList = computed(() => {
   return customerList.value.filter(customer => {
     if (customer && customer.customerName && customer.contactPhone) {
@@ -113,26 +114,32 @@ const filteredCustomerList = computed(() => {
       const phoneMatch = customer.contactPhone.toLowerCase().includes(searchQuery.value.contactPhone.toLowerCase());
       return nameMatch && phoneMatch;
     }
-    return false; // 如果 customer 或其关键属性不存在，则不匹配
+    return false;
   });
 });
 
-// 处理搜索
-const handleSearch = () => {
-  // 这里我们直接使用前端过滤，你也可以选择在点击搜索按钮时调用后端模糊查询接口
-  // 如果选择调用后端，你需要实现 performFuzzySearch 函数 (如之前的示例)
+const paginatedCustomerList = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return filteredCustomerList.value.slice(start, end);
+});
+
+const handlePageChange = (page) => {
+  currentPage.value = page;
 };
 
-// 打开添加客户对话框
+const handleSearch = () => {
+  currentPage.value = 1;
+};
+
 const openDialog = () => {
   dialogTitle.value = '添加客户';
   form.value = { customerId: null, customerName: '', contactPhone: '', contactAddress: '' };
   editingId.value = null;
-  formRef.value?.resetFields(); // 重置表单验证状态
+  formRef.value?.resetFields();
   dialogVisible.value = true;
 };
 
-// 编辑客户
 const editItem = (row) => {
   dialogTitle.value = '编辑客户';
   form.value = { customerId: row.customerId, customerName: row.customerName, contactPhone: row.contactPhone, contactAddress: row.contactAddress };
@@ -140,16 +147,10 @@ const editItem = (row) => {
   dialogVisible.value = true;
 };
 
-// 删除客户
 const deleteItem = async (row) => {
   try {
-    const response = await fetch(`http://localhost:8090/customer/delete?id=${row.customerId}`, {
-      method: 'GET',
-    });
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`删除客户失败: ${response.status} - ${errorData?.message || '未知错误'}`);
-    }
+    const response = await fetch(`http://localhost:8090/customer/delete?id=${row.customerId}`, { method: 'GET' });
+    if (!response.ok) throw new Error(`删除客户失败: ${response.status}`);
     ElMessage.success('删除成功');
     await fetchCustomerList();
   } catch (error) {
@@ -158,7 +159,6 @@ const deleteItem = async (row) => {
   }
 };
 
-// 保存客户信息（添加或编辑）
 const saveItem = async () => {
   formRef.value?.validate(async (valid) => {
     if (valid) {
@@ -169,34 +169,24 @@ const saveItem = async () => {
           contactPhone: form.value.contactPhone,
           contactAddress: form.value.contactAddress,
         };
-        const method = editingId.value ? 'POST' : 'POST';
         const url = editingId.value
             ? 'http://localhost:8090/customer/modify'
             : 'http://localhost:8090/customer/save';
 
         const response = await fetch(url, {
-          method: method,
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(`保存客户失败: ${response.status} - ${errorData?.message || '未知错误'}`);
-        }
+        if (!response.ok) throw new Error(`保存客户失败: ${response.status}`);
 
         const newData = await response.json();
         if (editingId.value) {
-          // 更新
           const index = customerList.value.findIndex(item => item.customerId === editingId.value);
-          if (index !== -1) {
-            customerList.value[index] = newData;
-          }
+          if (index !== -1) customerList.value[index] = newData;
           ElMessage.success('更新成功');
         } else {
-          // 添加
           customerList.value = [...customerList.value, newData];
           ElMessage.success('添加成功');
         }

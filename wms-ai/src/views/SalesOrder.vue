@@ -1,9 +1,28 @@
 <template>
   <div>
     <h1>销售单管理</h1>
-    <el-button type="primary" @click="goToCreateSalesOrder">创建销售单</el-button>
 
-    <el-table :data="salesOrderList" style="width: 100%">
+    <div style="margin-bottom: 10px;">
+      <el-input
+          v-model="searchQuery.customerName"
+          placeholder="按客户姓名搜索"
+          clearable
+          style="width: 200px; margin-right: 10px;"
+      />
+      <el-date-picker
+          v-model="searchQuery.saleDateRange"
+          type="daterange"
+          range-separator="至"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          style="margin-right: 10px;"
+          value-format="YYYY-MM-DD"
+      />
+      <el-button @click="handleSearch">搜索</el-button>
+      <el-button type="primary" @click="goToCreateSalesOrder">创建销售单</el-button>
+    </div>
+
+    <el-table :data="paginatedSalesOrderList" style="width: 100%">
       <el-table-column prop="salesOrderId" label="销售单 ID" width="120"></el-table-column>
       <el-table-column prop="customerName" label="客户姓名"></el-table-column>
       <el-table-column prop="saleDate" label="销售日期"></el-table-column>
@@ -15,6 +34,16 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <el-pagination
+        background
+        layout="prev, pager, next"
+        :total="filteredSalesOrderList.length"
+        :page-size="pageSize"
+        :current-page="currentPage"
+        @current-change="handlePageChange"
+        style="margin-top: 20px; text-align: right;"
+    />
 
     <el-dialog v-model="dialogVisible" title="销售单明细" width="60%">
       <el-table :data="salesOrderDetails" style="width: 100%">
@@ -50,13 +79,52 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { ElMessage, ElMessageBox, ElDialog } from 'element-plus'; // 确保引入 ElDialog
+import { ElMessage, ElMessageBox } from 'element-plus';
 
 const router = useRouter();
 const salesOrderList = ref([]);
-const dialogVisible = ref(false); // 控制弹窗显示隐藏的变量
-const salesOrderDetails = ref([]); // 存储销售单明细数据的变量
-const currentSalesOrderId = ref(null); // 存储当前查看的销售单ID
+const dialogVisible = ref(false);
+const salesOrderDetails = ref([]);
+const currentSalesOrderId = ref(null);
+
+// 搜索表单
+const searchQuery = ref({
+  customerName: '',
+  saleDateRange: [],
+});
+
+// 分页变量
+const currentPage = ref(1);
+const pageSize = ref(10);
+
+// 搜索过滤后的数据
+const filteredSalesOrderList = computed(() => {
+  return salesOrderList.value.filter(order => {
+    const nameMatch = order.customerName.toLowerCase().includes(searchQuery.value.customerName.toLowerCase());
+    const dateMatch = (() => {
+      if (!searchQuery.value.saleDateRange || searchQuery.value.saleDateRange.length !== 2) return true;
+      const [start, end] = searchQuery.value.saleDateRange;
+      const orderDate = new Date(order.saleDate);
+      return new Date(start) <= orderDate && orderDate <= new Date(end);
+    })();
+    return nameMatch && dateMatch;
+  });
+});
+
+// 当前页展示的数据
+const paginatedSalesOrderList = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return filteredSalesOrderList.value.slice(start, end);
+});
+
+const handlePageChange = (page) => {
+  currentPage.value = page;
+};
+
+const handleSearch = () => {
+  currentPage.value = 1; // 搜索后重置页码
+};
 
 const totalPrice = computed(() => {
   return salesOrderDetails.value.reduce((sum, item) => sum + item.quantity * item.salePrice, 0);
@@ -68,17 +136,13 @@ const formatCurrency = (price) => {
 
 const fetchSalesOrderList = async () => {
   try {
-    const response = await fetch('http://localhost:8090/sales-order/list'); // 替换为你的实际 API 端点
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`获取销售单列表失败: ${response.status} - ${errorData?.message || '未知错误'}`);
-    }
+    const response = await fetch('http://localhost:8090/sales-order/list');
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const responseData = await response.json();
     if (responseData.code === 200) {
-      salesOrderList.value = responseData.data; // 从 data 字段中获取列表数据
+      salesOrderList.value = responseData.data;
     } else {
       ElMessage.error(`获取销售单列表失败: ${responseData.msg}`);
-      console.error('获取销售单列表失败:', responseData);
     }
   } catch (error) {
     console.error('获取销售单列表失败:', error);
@@ -87,27 +151,19 @@ const fetchSalesOrderList = async () => {
 };
 
 const fetchSalesOrderDetailsForView = async (id) => {
-  if (id) {
-    try {
-      const response = await fetch(`http://localhost:8090/sales-order/items/${id}`); // 直接访问获取明细条目的 API
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`获取销售单明细失败: ${response.status} - ${errorData?.message || '未知错误'}`);
-      }
-      const responseData = await response.json();
-      if (responseData.code === 200 && responseData.data) {
-        salesOrderDetails.value = responseData.data;
-      } else {
-        ElMessage.error(`获取销售单明细失败: ${responseData.msg}`);
-        salesOrderDetails.value = []; // 清空明细数据
-      }
-    } catch (error) {
-      console.error('获取销售单明细失败:', error);
-      ElMessage.error('获取销售单明细失败');
-      salesOrderDetails.value = []; // 清空明细数据
+  if (!id) return salesOrderDetails.value = [];
+  try {
+    const response = await fetch(`http://localhost:8090/sales-order/items/${id}`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const responseData = await response.json();
+    if (responseData.code === 200) {
+      salesOrderDetails.value = responseData.data;
+    } else {
+      ElMessage.error(`获取销售单明细失败: ${responseData.msg}`);
     }
-  } else {
-    salesOrderDetails.value = []; // 如果没有 ID，清空明细数据
+  } catch (error) {
+    console.error('获取销售单明细失败:', error);
+    ElMessage.error('获取销售单明细失败');
   }
 };
 
@@ -116,57 +172,46 @@ onMounted(() => {
 });
 
 const goToCreateSalesOrder = () => {
-  router.push('/sales-order/create'); // 假设你的创建销售单路由是 /sales-order/create
+  router.push('/sales-order/create');
 };
 
 const goToEditSalesOrder = (id) => {
-  router.push(`/sales-order/edit/${id}`); // 假设你的编辑销售单路由是 /sales-order/edit/:id
+  router.push(`/sales-order/edit/${id}`);
 };
 
 const deleteSalesOrder = (id) => {
-  ElMessageBox.confirm(
-      '确定要删除此销售单吗?',
-      '警告',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }
-  )
-      .then(async () => {
-        try {
-          const response = await fetch(`http://localhost:8090/sales-order/delete?id=${id}`, { // 替换为你的实际 API 端点
-            method: 'GET', // 或者 DELETE，根据你的后端 API 定义
-          });
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`删除销售单失败: ${response.status} - ${errorData?.message || '未知错误'}`);
-          }
-          const responseData = await response.json();
-          if (responseData.code === 200) {
-            ElMessage.success('删除成功');
-            await fetchSalesOrderList(); // 刷新列表
-          } else {
-            ElMessage.error(`删除销售单失败: ${responseData.msg}`);
-            console.error('删除销售单失败:', responseData);
-          }
-        } catch (error) {
-          console.error('删除销售单失败:', error);
-          ElMessage.error('删除销售单失败');
-        }
-      })
-      .catch(() => {
-        ElMessage.info('已取消删除');
+  ElMessageBox.confirm('确定要删除此销售单吗?', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).then(async () => {
+    try {
+      const response = await fetch(`http://localhost:8090/sales-order/delete?id=${id}`, {
+        method: 'GET',
       });
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const responseData = await response.json();
+      if (responseData.code === 200) {
+        ElMessage.success('删除成功');
+        await fetchSalesOrderList();
+      } else {
+        ElMessage.error(`删除失败: ${responseData.msg}`);
+      }
+    } catch (error) {
+      console.error('删除销售单失败:', error);
+      ElMessage.error('删除销售单失败');
+    }
+  }).catch(() => {
+    ElMessage.info('已取消删除');
+  });
 };
 
 const viewSalesOrderDetails = (id) => {
   currentSalesOrderId.value = id;
-  fetchSalesOrderDetailsForView(id); // 调用获取明细方法
+  fetchSalesOrderDetailsForView(id);
   dialogVisible.value = true;
 };
 </script>
 
 <style scoped>
-
 </style>

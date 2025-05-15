@@ -1,28 +1,84 @@
 <template>
   <div>
     <h1>采购计划管理</h1>
-    <el-button type="primary" @click="openCreateDialog">创建采购计划</el-button>
+    <div style="margin-bottom: 10px;">
+      <el-input v-model="searchForm.planId" placeholder="按计划单号搜索" clearable style="width: 180px; margin-right: 10px;"></el-input>
+      <el-date-picker v-model="searchForm.planDate" type="date" placeholder="按计划日期搜索" clearable style="width: 180px; margin-right: 10px;"></el-date-picker>
+      <el-select v-model="searchForm.status" placeholder="按状态搜索" clearable style="width: 180px; margin-right: 10px;">
+        <el-option label="待处理" :value="0" />
+        <el-option label="已完成" :value="1" />
+        <el-option label="缺货" :value="2" />
+      </el-select>
+      <el-button @click="fetchPlanList">查询</el-button>
+      <el-button type="primary" @click="openCreatePlanDialog">新建采购计划</el-button>
+    </div>
 
-    <el-table :data="purchasePlanList" style="width: 100%">
-      <el-table-column prop="planId" label="计划 ID" width="100"></el-table-column>
-      <el-table-column prop="purchaseDate" label="采购日期" width="150"></el-table-column>
-      <el-table-column label="操作" width="200">
+    <el-table :data="planList" style="width: 100%">
+      <el-table-column prop="planId" label="计划单号" width="120" />
+      <el-table-column prop="planDate" label="计划日期" width="150" />
+      <el-table-column prop="statusText" label="状态" />
+      <el-table-column label="操作" width="200" fixed="right">
         <template #default="scope">
-          <el-button size="small" @click="openEditDialog(scope.row.planId)">编辑</el-button>
-          <el-button size="small" type="danger" @click="deletePurchasePlan(scope.row.planId)">删除</el-button>
+          <el-button size="small" @click="viewPlanDetails(scope.row.planId)">查看</el-button>
+          <el-button size="small" :disabled="scope.row.status === 1" @click="handlePlan(scope.row)">处理</el-button>
+          <el-button size="small" type="danger" @click="deletePlan(scope.row.planId)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <el-dialog v-model="editDialogVisible" title="编辑采购计划" width="70%" @close="closeEditDialog">
-      <purchase-plan-form
-          v-if="editDialogVisible"
-          :purchase-plan-id="editingPurchasePlanId"
-          @success="fetchPurchasePlanList"
-      />
+    <!-- 查看计划明细 -->
+    <el-dialog v-model="dialogVisible" title="采购计划明细" width="60%" @open="adjustDialogSize">
+      <el-table :data="planDetails" style="width: 100%">
+        <el-table-column prop="productId" label="商品ID" />
+        <el-table-column prop="productName" label="商品名称" />
+        <el-table-column prop="specifications" label="规格" />
+        <el-table-column prop="planQuantity" label="计划数量" />
+        <el-table-column prop="stockQuantity" label="当前库存" />
+      </el-table>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="closeEditDialog">取消</el-button>
+          <el-button @click="dialogVisible = false">关闭</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 新建采购计划 -->
+    <el-dialog v-model="createDialogVisible" title="新建采购计划" width="80%">
+      <el-table :data="productList" style="width: 100%">
+        <el-table-column prop="productId" label="商品ID" />
+        <el-table-column prop="productName" label="商品名称" />
+        <el-table-column prop="stockQuantity" label="库存数量" />
+        <el-table-column label="计划数量">
+          <template #default="scope">
+            <el-input-number v-model="scope.row.planQuantity" :min="0" />
+          </template>
+        </el-table-column>
+      </el-table>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="createDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="savePlan">保存</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 处理采购计划 -->
+    <el-dialog v-model="handleDialogVisible" title="处理采购计划" width="80%">
+      <el-table :data="planForm.items" style="width: 100%">
+        <el-table-column prop="productId" label="商品ID" />
+        <el-table-column prop="productName" label="商品名称" />
+        <el-table-column prop="planQuantity" label="计划数量" />
+        <el-table-column prop="stockQuantity" label="库存数量" />
+        <el-table-column label="实际采购数量">
+          <template #default="scope">
+            <el-input-number v-model="scope.row.realQuantity" :min="0" :max="scope.row.planQuantity" />
+          </template>
+        </el-table-column>
+      </el-table>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="handleDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitPlanProcessing">确认处理</el-button>
         </span>
       </template>
     </el-dialog>
@@ -31,92 +87,152 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-//import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
-//import PurchasePlanForm from './PurchasePlanForm.vue'; // 确保路径正确
 
-//const router = useRouter();
-const purchasePlanList = ref([]);
-const editDialogVisible = ref(false);
-const editingPurchasePlanId = ref(null);
+// 状态与数据
+const planList = ref([]);
+const productList = ref([]);
+const planDetails = ref([]);
+const searchForm = ref({ planId: '', planDate: null, status: null });
+const planForm = ref({ planId: null, items: [] });
+const currentPlanId = ref(null);
 
-const fetchPurchasePlanList = async () => {
+// 弹窗控制
+const dialogVisible = ref(false);
+const createDialogVisible = ref(false);
+const handleDialogVisible = ref(false);
+
+// 显示计划列表
+const fetchPlanList = async () => {
   try {
-    const response = await fetch('http://localhost:8090/purchase-plan/list'); // 替换为你的实际 API endpoint
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`获取采购计划列表失败: ${response.status} - ${errorData?.message || '未知错误'}`);
-    }
-    const responseData = await response.json();
-    if (responseData.code === 200) {
-      purchasePlanList.value = responseData.data;
-    } else {
-      ElMessage.error(`获取采购计划列表失败: ${responseData.msg}`);
-      console.error('获取采购计划列表失败:', responseData);
-    }
-  } catch (error) {
-    console.error('获取采购计划列表失败:', error);
-    ElMessage.error('获取采购计划列表失败');
+    const res = await fetch('http://localhost:8090/purchase-plan/list');
+    const data = await res.json();
+    planList.value = data.data.map(p => ({
+      ...p,
+      statusText: getStatusText(p.status),
+    }));
+  } catch {
+    ElMessage.error('获取采购计划失败');
   }
 };
 
+// 获取计划明细
+const viewPlanDetails = async (planId) => {
+  currentPlanId.value = planId;
+  const res = await fetch(`http://localhost:8090/purchase-plan/items/${planId}`);
+  const data = await res.json();
+  planDetails.value = data.data;
+  dialogVisible.value = true;
+};
+
+// 新建采购计划
+const openCreatePlanDialog = async () => {
+  const res = await fetch('http://localhost:8090/product/list');
+  const data = await res.json();
+  productList.value = data.data.map(p => ({ ...p, planQuantity: 0 }));
+  createDialogVisible.value = true;
+};
+
+// 保存采购计划
+const savePlan = async () => {
+  const payload = {
+    planDate: new Date().toISOString().slice(0, 10),
+    status: 0,
+    items: productList.value
+        .filter(p => p.planQuantity > 0)
+        .map(p => ({ productId: p.productId, quantity: p.planQuantity })),
+  };
+  const res = await fetch('http://localhost:8090/purchase-plan/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (data.code === 200) {
+    ElMessage.success('保存成功');
+    createDialogVisible.value = false;
+    fetchPlanList();
+  } else {
+    ElMessage.error('保存失败');
+  }
+};
+
+// 处理采购计划
+const handlePlan = async (row) => {
+  currentPlanId.value = row.planId;
+  const res = await fetch(`http://localhost:8090/purchase-plan/items/${row.planId}`);
+  const data = await res.json();
+  planForm.value = {
+    planId: row.planId,
+    items: data.data.map(p => ({
+      ...p,
+      realQuantity: p.planQuantity,
+    })),
+  };
+  handleDialogVisible.value = true;
+};
+
+// 提交采购处理
+const submitPlanProcessing = async () => {
+  const hasShortage = planForm.value.items.some(i => i.realQuantity < i.planQuantity);
+  const payload = {
+    planId: planForm.value.planId,
+    status: hasShortage ? 2 : 1,
+    items: planForm.value.items.map(i => ({
+      productId: i.productId,
+      quantity: i.realQuantity,
+    })),
+  };
+  const res = await fetch('http://localhost:8090/purchase-plan/modify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (data.code === 200) {
+    ElMessage.success('处理成功');
+    handleDialogVisible.value = false;
+    fetchPlanList();
+  } else {
+    ElMessage.error('处理失败');
+  }
+};
+
+// 删除采购计划
+const deletePlan = (planId) => {
+  ElMessageBox.confirm('确认删除此采购计划？', '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).then(async () => {
+    const res = await fetch(`http://localhost:8090/purchase-plan/delete?id=${planId}`, {
+      method: 'GET',
+    });
+    const data = await res.json();
+    if (data.code === 200) {
+      ElMessage.success('删除成功');
+      fetchPlanList();
+    } else {
+      ElMessage.error('删除失败');
+    }
+  });
+};
+
+// 状态转换
+const getStatusText = (status) => {
+  return status === 0 ? '待处理' : status === 1 ? '已完成' : '缺货';
+};
+
+// 解决 ResizeObserver 报错
+const adjustDialogSize = () => {
+  requestAnimationFrame(() => {
+    const dialog = document.querySelector('.el-dialog');
+    if (dialog) dialog.style.maxWidth = '80%';
+  });
+};
+
+// 初始化加载
 onMounted(() => {
-  fetchPurchasePlanList();
+  fetchPlanList();
 });
-
-const openCreateDialog = () => {
-  editingPurchasePlanId.value = null;
-  editDialogVisible.value = true;
-};
-
-const openEditDialog = (id) => {
-  editingPurchasePlanId.value = id;
-  editDialogVisible.value = true;
-};
-
-const closeEditDialog = () => {
-  editDialogVisible.value = false;
-  editingPurchasePlanId.value = null;
-};
-
-const deletePurchasePlan = (id) => {
-  ElMessageBox.confirm(
-      '确定要删除此采购计划?',
-      '警告',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }
-  )
-      .then(async () => {
-        try {
-          const response = await fetch(`http://localhost:8090/purchase-plan/delete?purchasePlanId=${id}`, { // 替换为你的实际 API endpoint
-            method: 'GET', // 或 DELETE，根据你的后端 API 定义
-          });
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`删除采购计划失败: ${response.status} - ${errorData?.message || '未知错误'}`);
-          }
-          const responseData = await response.json();
-          if (responseData.code === 200) {
-            ElMessage.success('采购计划删除成功');
-            await fetchPurchasePlanList(); // 刷新列表
-          } else {
-            ElMessage.error(`删除采购计划失败: ${responseData.msg}`);
-            console.error('删除采购计划失败:', responseData);
-          }
-        } catch (error) {
-          console.error('删除采购计划失败:', error);
-          ElMessage.error('删除采购计划失败');
-        }
-      })
-      .catch(() => {
-        ElMessage.info('已取消删除');
-      });
-};
 </script>
-
-<style scoped>
-/* 可以添加一些样式 */
-</style>
