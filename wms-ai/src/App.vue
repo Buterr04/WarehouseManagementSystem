@@ -27,6 +27,7 @@
           </template>
           <el-menu-item index="/inventory-management/inventory-in">入库管理</el-menu-item>
           <el-menu-item index="/inventory-management/inventory-out">出库管理</el-menu-item>
+          <el-menu-item index="/inventory-management/inventory-view">库存查询</el-menu-item>
         </el-sub-menu>
         <el-sub-menu index="sales-management">
           <template #title>

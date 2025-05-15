@@ -9,6 +9,7 @@ import HomePage from '../views/HomePage.vue';
 import SalesOrderForm from '../views/SalesOrderForm.vue'
 import CustomerMangement from "@/views/CustomerMangement.vue";
 import SalesOrderModify from "@/views/SalesOrderModify.vue";
+import InventoryManagement from "@/views/InventoryManagement.vue";
 
 const routes = [
     { path: '/', name: 'home', component: HomePage }, // 将根路径指向 HomePage
@@ -25,6 +26,7 @@ const routes = [
         children: [
             { path: 'inventory-in', name: 'inventory-in', component: InventoryIn },
             { path: 'inventory-out', name: 'inventory-out', component: InventoryOut },
+            { path: 'inventory-view', name: 'inventory-management', component: InventoryManagement },
         ],
     },
     {

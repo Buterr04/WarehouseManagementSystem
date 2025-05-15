@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1>商品管理</h1>
+    <h1>商品库存管理</h1>
     <div style="margin-bottom: 10px;">
       <el-input
           v-model="searchQuery.productName"
@@ -23,6 +23,7 @@
       <el-table-column prop="productName" label="商品名称"></el-table-column>
       <el-table-column prop="specifications" label="商品规格"></el-table-column>
       <el-table-column prop="unitPrice" label="价格"></el-table-column>
+      <el-table-column prop="stockQuantity" label="库存数量"></el-table-column>
       <el-table-column label="操作" width="200">
         <template #default="scope">
           <el-button size="small" @click="editItem(scope.row)">编辑</el-button>
@@ -41,6 +42,9 @@
         </el-form-item>
         <el-form-item label="价格">
           <el-input v-model="form.unit"></el-input>
+        </el-form-item>
+        <el-form-item label="库存数量">
+          <el-input v-model="form.stockQuantity"></el-input>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -108,14 +112,14 @@ const handleSearch = () => {
 
 const openDialog = () => {
   dialogTitle.value = '添加商品';
-  form.value = { id: null, name: '', category: '', unit: '' };
+  form.value = { id: null, name: '', category: '', unit: '', stockQuantity: '' };
   editingId.value = null;
   dialogVisible.value = true;
 };
 
 const editItem = (row) => {
   dialogTitle.value = '编辑商品';
-  form.value = { id: row.productId, name: row.productName, category: row.specifications, unit: row.unitPrice };
+  form.value = { id: row.productId, name: row.productName, category: row.specifications, unit: row.unitPrice, stockQuantity: row.stockQuantity };
   editingId.value = row.productId;
   dialogVisible.value = true;
 };
@@ -144,6 +148,7 @@ const saveItem = async () => {
       productName: form.value.name,
       specifications: form.value.category,
       unitPrice: form.value.unit,
+      stockQuantity: form.value.stockQuantity,
     };
     const method = editingId.value ? 'POST' : 'POST';
     const url = editingId.value
