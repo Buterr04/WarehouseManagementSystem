@@ -28,7 +28,7 @@ public class StockInItem implements Serializable {
 
     private Integer stockInId;
 
-    private String productId;
+    private Integer productId;
 
     private Integer quantity;
 

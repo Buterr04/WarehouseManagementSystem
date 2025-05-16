@@ -29,7 +29,7 @@ public class PurchaseOrderItem implements Serializable {
 
     private Integer orderId;
 
-    private String productId;
+    private Integer productId;
 
     private Integer quantity;
 

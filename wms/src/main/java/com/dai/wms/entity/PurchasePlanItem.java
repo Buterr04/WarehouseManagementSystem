@@ -27,9 +27,15 @@ public class PurchasePlanItem implements Serializable {
 
     private Integer planId;
 
-    private String productId;
+    private Integer productId;
 
-    private Integer quantityOrdered;
+    private Integer planQuantity ;
+
+    private String productName; // 非数据库字段
+
+    private String specifications; // 非数据库字段
+
+    private Integer stockQuantity; // 非数据库字段
 
 
 }

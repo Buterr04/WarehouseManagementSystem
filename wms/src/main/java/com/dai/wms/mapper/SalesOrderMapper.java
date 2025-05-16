@@ -31,9 +31,6 @@ public interface SalesOrderMapper extends BaseMapper<SalesOrder> {
             "WHERE so.sales_order_id = #{salesOrderId}")
     SalesOrder selectSalesOrderByIdWithCustomer(Integer salesOrderId);
 
-    @Insert("INSERT INTO sales_order (customer_id, sale_date) " +
-            "VALUES (#{customerId}, #{saleDate})")
-    @Options(useGeneratedKeys = true, keyProperty = "salesOrderId")
-    int insert(SalesOrder salesOrder);
+
 
 }

@@ -19,13 +19,13 @@ import java.util.List;
 @Mapper
 public interface PurchasePlanItemMapper extends BaseMapper<PurchasePlanItem> {
 
-    @Select("SELECT plan_item_id, plan_id, product_id, quantity_ordered " +
+    @Select("SELECT plan_item_id, plan_id, product_id, plan_quantity " +
             "FROM purchase_plan_item " +
             "WHERE plan_id = #{planId}")
     List<PurchasePlanItem> selectPurchasePlanItemsByPlanId(@Param("planId") Integer planId);
 
-    @Select("SELECT ppi.plan_item_id, ppi.plan_id, ppi.product_id, ppi.quantity_ordered, " +
-            "p.product_name, p.specifications " + // 假设 product 表有 product_name 和 specifications 字段
+    @Select("SELECT ppi.plan_item_id, ppi.plan_id, ppi.product_id, ppi.plan_quantity, " +
+            "p.product_name, p.specifications, p.stock_quantity " + // 假设 product 表有 product_name 和 specifications 字段
             "FROM purchase_plan_item ppi " +
             "JOIN product p ON ppi.product_id = p.product_id " +
             "WHERE ppi.plan_id = #{planId}")

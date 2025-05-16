@@ -29,7 +29,7 @@ public class ReturnOrderItem implements Serializable {
 
     private Integer returnId;
 
-    private String productId;
+    private Integer productId;
 
     private Integer quantity;
 
