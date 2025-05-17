@@ -2,10 +2,13 @@ package com.dai.wms.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import java.time.LocalDate;
+
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import java.io.Serializable;
+import java.util.List;
+
 import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -27,13 +30,13 @@ public class PurchaseOrder implements Serializable {
     @TableId(value = "order_id", type = IdType.AUTO)
     private Integer orderId;
 
-    private Integer planId;
-
     private Integer supplierId;
 
     private LocalDate orderDate;
 
     private LocalDate deliveryDate;
 
+    @TableField(exist = false)
+    private List<PurchaseOrderItem> purchaseOrderItems;
 
 }

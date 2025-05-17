@@ -2,8 +2,12 @@ package com.dai.wms.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import java.time.LocalDate;
+
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import java.io.Serializable;
+import java.util.List;
+
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -33,5 +37,9 @@ public class StockIn implements Serializable {
 
     private LocalDate stockInDate;
 
+    private Integer status;
+
+    @TableField(exist = false)
+    private List<StockInItem> stockInItems;
 
 }

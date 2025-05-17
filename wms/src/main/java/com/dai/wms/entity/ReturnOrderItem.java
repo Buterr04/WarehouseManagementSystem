@@ -35,5 +35,8 @@ public class ReturnOrderItem implements Serializable {
 
     private BigDecimal returnPrice;
 
+    private String productName; // 产品名称非数据库字段
+
+    private String specification; // 规格非数据库字段
 
 }

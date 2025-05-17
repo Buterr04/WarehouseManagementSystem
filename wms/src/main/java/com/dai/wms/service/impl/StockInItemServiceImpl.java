@@ -4,7 +4,10 @@ import com.dai.wms.entity.StockInItem;
 import com.dai.wms.mapper.StockInItemMapper;
 import com.dai.wms.service.StockInItemService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * <p>
@@ -17,4 +20,16 @@ import org.springframework.stereotype.Service;
 @Service
 public class StockInItemServiceImpl extends ServiceImpl<StockInItemMapper, StockInItem> implements StockInItemService {
 
+    @Autowired
+    private StockInItemMapper stockInItemMapper;
+
+    @Override
+    public List<StockInItem> getStockInItemsByStockInId(Integer stockInId) {
+        return stockInItemMapper.selectStockInItemsByStockInId(stockInId);
+    }
+
+    @Override
+    public List<StockInItem> getStockInItemsWithProductInfo(Integer stockInId) {
+        return stockInItemMapper.selectStockInItemsWithProductInfo(stockInId);  //   新增方法的实现
+    }
 }

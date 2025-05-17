@@ -19,6 +19,7 @@
           </template>
           <el-menu-item index="/purchase-management/purchase-plan">采购计划</el-menu-item>
           <el-menu-item index="/purchase-management/purchase-order">采购订单</el-menu-item>
+          <el-menu-item index="/purchase-management/supplier-management">供应商管理</el-menu-item>
         </el-sub-menu>
         <el-sub-menu index="inventory-management">
           <template #title>

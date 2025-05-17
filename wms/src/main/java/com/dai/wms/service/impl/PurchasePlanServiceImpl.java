@@ -47,14 +47,15 @@ public class PurchasePlanServiceImpl extends ServiceImpl<PurchasePlanMapper, Pur
     @Transactional
     @Override
     public boolean savePurchasePlanWithItems(PurchasePlan purchasePlan) {
-        boolean purchasePlanSaved = this.save(purchasePlan);
+        boolean saved = this.save(purchasePlan);  // MyBatis-Plus 自动生成 INSERT 语句
 
-        if (purchasePlanSaved) {
-            Integer purchasePlanId = purchasePlan.getPlanId();
-            List<PurchasePlanItem> purchasePlanItems = purchasePlan.getPurchasePlanItems();
-            if (purchasePlanItems != null && !purchasePlanItems.isEmpty()) {
-                for (PurchasePlanItem item : purchasePlanItems) {
-                    item.setPlanId(purchasePlanId);
+        if (saved) {
+            Integer planId = purchasePlan.getPlanId();  // 自增主键自动回填
+            List<PurchasePlanItem> items = purchasePlan.getPurchasePlanItems();
+
+            if (items != null && !items.isEmpty()) {
+                for (PurchasePlanItem item : items) {
+                    item.setPlanId(planId);  // 设置外键
                     purchasePlanItemMapper.insert(item);
                 }
             }
@@ -62,6 +63,7 @@ public class PurchasePlanServiceImpl extends ServiceImpl<PurchasePlanMapper, Pur
         }
         return false;
     }
+
 
     @Transactional
     @Override
