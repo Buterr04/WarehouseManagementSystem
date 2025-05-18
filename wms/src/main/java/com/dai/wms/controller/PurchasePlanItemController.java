@@ -32,8 +32,9 @@ public class PurchasePlanItemController {
     private PurchasePlanItemService purchasePlanItemService;
 
     @GetMapping("/list")
-    public List<PurchasePlanItem> list() {
-        return purchasePlanItemService.list();
+    public Result getAllPlanItemsWithProductInfo() {
+        List<PurchasePlanItem> items = purchasePlanItemService.getAllPlanItemsWithProductInfo();
+        return Result.success(items);
     }
 
     // 增

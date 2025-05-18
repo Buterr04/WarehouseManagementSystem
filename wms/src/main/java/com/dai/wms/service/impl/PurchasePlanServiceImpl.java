@@ -87,4 +87,11 @@ public class PurchasePlanServiceImpl extends ServiceImpl<PurchasePlanMapper, Pur
         }
         return false;
     }
+
+    @Override
+    public boolean updateStatusById(Integer planId, String status) {
+        purchasePlanMapper.updateStatusById(planId, status);
+        return true;
+    }
+
 }

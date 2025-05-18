@@ -30,7 +30,11 @@ public class PurchasePlan implements Serializable {
     @TableId(value = "plan_id", type = IdType.AUTO)
     private Integer planId;
 
+    private Integer stockOutId;
+
     private LocalDate purchaseDate;
+
+    private Integer status;
 
     @TableField(exist = false)
     private List<PurchasePlanItem> purchasePlanItems;

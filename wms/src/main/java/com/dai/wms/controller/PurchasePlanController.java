@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -79,4 +80,14 @@ public class PurchasePlanController {
         List<PurchasePlanItem> items = purchasePlanItemService.getPurchasePlanItemsWithProductInfo(purchasePlanId);
         return Result.success(items);
     }
+
+    @PostMapping("/updateStatus")
+    public Result updateStatus(@RequestBody Map<String, Object> data) {
+        Integer planId = (Integer) data.get("planId");
+        String status = (String) data.get("status");
+
+        boolean success = purchasePlanService.updateStatusById(planId, status);
+        return success ? Result.success() : Result.fail();
+    }
+
 }

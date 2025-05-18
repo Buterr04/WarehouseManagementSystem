@@ -72,7 +72,7 @@
         <el-table-column prop="customerName" label="客户姓名"></el-table-column>
         <el-table-column prop="status" label="状态">
           <template #default="scope">
-            <span>{{ scope.row.status === 0 ? '待处理' : scope.row.status === 1 ? '已出库' : '缺货' }}</span>
+            <span>{{ scope.row.status === 0 ? '待处理' : scope.row.status === 1 ? '已出库' : scope.row.status === 2 ? '缺货' : "已请求采购" }}</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="150" fixed="right">
@@ -442,7 +442,7 @@ const confirmNormalOutbound = async () => {
   await fetchOutboundOrderList();
 };
 
-const getStatusText = (status) => status === 0 ? '待处理' : status === 1 ? '已出库' : '缺货';
+const getStatusText = (status) => status === 0 ? '待处理' : status === 1 ? '已出库' : status === 2 ? '缺货' : "已请求采购" ;
 
 const deleteOutbound = (stockOutId) => {
   ElMessageBox.confirm('确定要删除此出库单吗?', '警告', {

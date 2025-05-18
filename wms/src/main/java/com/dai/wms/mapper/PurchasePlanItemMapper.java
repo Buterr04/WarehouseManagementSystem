@@ -60,4 +60,10 @@ public interface PurchasePlanItemMapper extends BaseMapper<PurchasePlanItem> {
     @Delete("DELETE FROM purchase_plan_item WHERE plan_id = #{planId}")
     void deleteByPlanId(@Param("planId") Long planId);
 
+    @Select("SELECT ppi.plan_item_id, ppi.plan_id, ppi.product_id, ppi.plan_quantity, " +
+            "p.product_name, p.specifications, p.stock_quantity, p.supplier_id " +
+            "FROM purchase_plan_item ppi " +
+            "JOIN product p ON ppi.product_id = p.product_id")
+    List<PurchasePlanItem> selectAllPlanItemsWithProductInfo();
+
 }

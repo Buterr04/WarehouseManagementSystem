@@ -19,4 +19,6 @@ public interface PurchasePlanService extends IService<PurchasePlan> {
     boolean updatePurchasePlanWithItems(PurchasePlan purchasePlan);
     List<PurchasePlan> list();
     PurchasePlan findByIdWithItems(Integer purchasePlanId);
+    boolean updateStatusById(Integer planId, String status);
+
 }

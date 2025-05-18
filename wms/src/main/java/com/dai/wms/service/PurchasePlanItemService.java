@@ -17,4 +17,5 @@ public interface PurchasePlanItemService extends IService<PurchasePlanItem> {
 
     List<PurchasePlanItem> getPurchasePlanItemsByPurchasePlanId(Integer purchasePlanId);
     List<PurchasePlanItem> getPurchasePlanItemsWithProductInfo(Integer purchasePlanId); // 新增方法
+    List<PurchasePlanItem> getAllPlanItemsWithProductInfo();// 新增方法
 }

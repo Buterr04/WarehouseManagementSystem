@@ -23,7 +23,7 @@ public interface PurchasePlanMapper extends BaseMapper<PurchasePlan> {
     List<PurchasePlan> selectAll();
 
     // 查询计划列表（仅ID和时间）—— 用于选择下拉、简略展示等
-    @Select("SELECT plan_id, purchase_date FROM purchase_plan")
+    @Select("SELECT plan_id, purchase_date, stock_out_id, status FROM purchase_plan")
     List<PurchasePlan> selectPurchasePlanList();
 
     // 查询某个计划（仅ID和时间）
@@ -38,5 +38,8 @@ public interface PurchasePlanMapper extends BaseMapper<PurchasePlan> {
             "</script>"
     })
     void deleteBatch(@Param("ids") List<Long> ids);
+
+    @Update("UPDATE purchase_plan SET status = #{status} WHERE plan_id = #{planId}")
+    void updateStatusById(@Param("planId") Integer planId, @Param("status") String status);
 
 }

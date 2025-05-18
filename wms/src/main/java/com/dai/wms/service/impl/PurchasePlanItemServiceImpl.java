@@ -32,4 +32,9 @@ public class PurchasePlanItemServiceImpl extends ServiceImpl<PurchasePlanItemMap
     public List<PurchasePlanItem> getPurchasePlanItemsWithProductInfo(Integer purchasePlanId) {
         return purchasePlanItemMapper.selectPurchasePlanItemsWithProductInfo(purchasePlanId); // 新增方法的实现
     }
+
+    @Override
+    public List<PurchasePlanItem> getAllPlanItemsWithProductInfo() {
+        return purchasePlanItemMapper.selectAllPlanItemsWithProductInfo();
+    }
 }
