@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -39,21 +40,9 @@ public class StockOutController {
     @PostMapping("/save")
     public Result save(@RequestBody StockOut stockOut) {
         boolean stockOutSaved = stockOutService.saveStockOutWithItems(stockOut);
-
-        if (stockOutSaved) {
-            Integer stockOutId = stockOut.getStockOutId();
-            List<StockOutItem> stockOutItems = stockOut.getStockOutItems();
-            if (stockOutItems != null && !stockOutItems.isEmpty()) {
-                for (StockOutItem item : stockOutItems) {
-                    item.setStockOutId(stockOutId);
-                    stockOutItemService.save(item);
-                }
-            }
-            return Result.success();
-        } else {
-            return Result.fail();
-        }
+        return stockOutSaved ? Result.success() : Result.fail();
     }
+
 
     // 删
     @GetMapping("/delete")
@@ -96,4 +85,14 @@ public class StockOutController {
         List<StockOutItem> itemsWithProductInfo = stockOutItemService.getStockOutItemsWithProductInfo(stockOutId);
         return Result.success(itemsWithProductInfo);
     }
+
+    @PostMapping("/updateStatus")
+    public Result updateStatus(@RequestBody Map<String, Object> data) {
+        Integer stockOutId = (Integer) data.get("stockOutId");
+        String status = (String) data.get("status");
+
+        boolean success = stockOutService.updateStatusById(stockOutId, status);
+        return success ? Result.success() : Result.fail();
+    }
+
 }

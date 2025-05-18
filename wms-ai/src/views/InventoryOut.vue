@@ -9,11 +9,11 @@
         <el-option label="已出库" :value="1"></el-option>
         <el-option label="缺货" :value="2"></el-option>
       </el-select>
-      <el-button @click="fetchOutboundOrderList">查询</el-button>
+      <el-button @click="handleSearch">查询</el-button>
       <el-button type="primary" @click="createOutboundOrder">生成出库单</el-button>
     </div>
 
-    <el-table :data="outboundOrderList" style="width: 100%">
+    <el-table :data="pagedOutboundOrderList" style="width: 100%">
       <el-table-column prop="stockOutId" label="出库单号" width="120"></el-table-column>
       <el-table-column prop="salesOrderId" label="关联销售单号" width="120"></el-table-column>
       <el-table-column prop="saleDate" label="销售日期" width="150"></el-table-column>
@@ -34,6 +34,16 @@
       </el-table-column>
     </el-table>
 
+    <el-pagination
+        background
+        layout="prev, pager, next"
+        :total="filteredOutboundOrderList.length"
+        :page-size="outboundPageSize"
+        :current-page="outboundCurrentPage"
+        @current-change="handleOutboundPageChange"
+        style="margin-top: 20px; text-align: right;"
+    />
+
     <el-dialog v-model="dialogVisible" title="出库单明细" width="60%">
       <el-table :data="outboundDetails" style="width: 100%">
         <el-table-column prop="productId" label="商品 ID"></el-table-column>
@@ -50,16 +60,38 @@
     </el-dialog>
 
     <el-dialog v-model="createOutboundDialogVisible" title="关联销售单创建出库单" width="80%">
-      <el-table :data="salesOrderList" style="width: 100%">
+      <!-- 新增：销售单过滤条件 -->
+      <div style="margin-bottom: 10px;">
+        <el-input v-model="salesOrderSearchForm.customerName" placeholder="按客户姓名搜索" clearable style="width: 180px; margin-right: 10px;"></el-input>
+        <el-date-picker v-model="salesOrderSearchForm.saleDate" type="date" placeholder="按销售日期搜索" clearable style="width: 180px; margin-right: 10px;"></el-date-picker>
+        <el-button @click="handleSalesOrderSearch">查询</el-button>
+      </div>
+      <el-table :data="pagedSalesOrderList" style="width: 100%">
         <el-table-column prop="salesOrderId" label="销售单号" width="120"></el-table-column>
         <el-table-column prop="saleDate" label="销售日期" width="150"></el-table-column>
         <el-table-column prop="customerName" label="客户姓名"></el-table-column>
+        <el-table-column prop="status" label="状态">
+          <template #default="scope">
+            <span>{{ scope.row.status === 0 ? '待处理' : scope.row.status === 1 ? '已出库' : '缺货' }}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="150" fixed="right">
           <template #default="scope">
             <el-button size="small" @click="showOutboundForm(scope.row)">生成出库单</el-button>
           </template>
         </el-table-column>
       </el-table>
+
+      <el-pagination
+          background
+          layout="prev, pager, next"
+          :total="filteredSalesOrderList.length"
+          :page-size="salesPageSize"
+          :current-page="salesCurrentPage"
+          @current-change="handleSalesPageChange"
+          style="margin-top: 20px; text-align: right;"
+      />
+
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="createOutboundDialogVisible = false">取消</el-button>
@@ -86,7 +118,7 @@
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="outboundFormVisible = false">取消</el-button>
+          <el-button @click="saveOutboundFormVisible = false">取消</el-button>
           <el-button type="primary" @click="saveOutboundOrder">保存</el-button>
         </span>
       </template>
@@ -120,11 +152,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-//import { useRouter } from 'vue-router';
-import {ElMessage, ElMessageBox} from 'element-plus';
+import { ref, onMounted, computed } from 'vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
 
-//const router = useRouter();
 const outboundOrderList = ref([]);
 const outboundDetails = ref([]);
 const salesOrderList = ref([]);
@@ -133,162 +163,200 @@ const createOutboundDialogVisible = ref(false);
 const dialogVisible = ref(false);
 const outboundFormVisible = ref(false);
 const saveOutboundFormVisible = ref(false);
-const outboundForm = ref({
-  salesOrderId: null,
-  items: [],
+const outboundForm = ref({ salesOrderId: null, items: [] });
+const searchForm = ref({ stockOutId: '', stockOutDate: null, status: null });
+
+// 分页相关变量
+const outboundCurrentPage = ref(1);
+const outboundPageSize = ref(10);
+const salesCurrentPage = ref(1);
+const salesPageSize = ref(8);
+
+// 搜索过滤后的出库单列表
+const filteredOutboundOrderList = computed(() => {
+  return outboundOrderList.value.filter(order => {
+    // 出库单号
+    if (searchForm.value.stockOutId && !String(order.stockOutId).includes(searchForm.value.stockOutId)) {
+      return false;
+    }
+    // 出库日期（修正：两边都转为 yyyy-MM-dd 字符串再比较，兼容 Date 和字符串）
+    if (searchForm.value.stockOutDate) {
+      // 格式化为 yyyy-MM-dd
+      const formatDate = (d) => {
+        if (!d) return '';
+        if (typeof d === 'string') {
+          // 兼容字符串格式
+          return d.slice(0, 10);
+        }
+        if (d instanceof Date) {
+          // 防止时区问题，直接取本地年月日
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        }
+        return '';
+      };
+      const searchDateStr = formatDate(searchForm.value.stockOutDate);
+      const orderDateStr = formatDate(order.stockOutDate);
+      if (orderDateStr !== searchDateStr) return false;
+    }
+    // 状态
+    if (searchForm.value.status !== null && searchForm.value.status !== '' && order.status !== searchForm.value.status) {
+      return false;
+    }
+    return true;
+  });
 });
-const searchForm = ref({
-  stockOutId: '',
-  stockOutDate: null,
-  status: null,
+
+// 出库单分页（基于过滤后数据）
+const pagedOutboundOrderList = computed(() => {
+  const start = (outboundCurrentPage.value - 1) * outboundPageSize.value;
+  const end = start + outboundPageSize.value;
+  return filteredOutboundOrderList.value.slice(start, end);
 });
+
+// 新增：如需对销售单做过滤，可在这里加条件
+const filteredSalesOrderList = computed(() => {
+  return salesOrderList.value.filter(order => {
+    // 只显示未处理的销售单
+    if (order.status !== 0) {
+      return false;
+    }
+    // 客户姓名过滤
+    if (salesOrderSearchForm.value.customerName && !order.customerName?.includes(salesOrderSearchForm.value.customerName)) {
+      return false;
+    }
+    // 销售日期过滤（修正：两边都转为 yyyy-MM-dd 字符串再比较，兼容 Date 和字符串）
+    if (salesOrderSearchForm.value.saleDate) {
+      const formatDate = (d) => {
+        if (!d) return '';
+        if (typeof d === 'string') {
+          return d.slice(0, 10);
+        }
+        if (d instanceof Date) {
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        }
+        return '';
+      };
+      const searchDateStr = formatDate(salesOrderSearchForm.value.saleDate);
+      const orderDateStr = formatDate(order.saleDate);
+      if (orderDateStr !== searchDateStr) return false;
+    }
+    return true;
+  });
+});
+
+// 新增：销售单分页
+const pagedSalesOrderList = computed(() => {
+  const start = (salesCurrentPage.value - 1) * salesPageSize.value;
+  const end = start + salesPageSize.value;
+  return filteredSalesOrderList.value.slice(start, end);
+});
+
+// 分页切换事件
+const handleOutboundPageChange = (page) => {
+  outboundCurrentPage.value = page;
+};
+const handleSalesPageChange = (page) => {
+  salesCurrentPage.value = page;
+};
 
 const fetchOutboundOrderList = async () => {
   try {
     let apiUrl = 'http://localhost:8090/stock-out/list';
     const queryParams = [];
-
-    if (searchForm.value.stockOutId) {
-      queryParams.push(`stockOutId=${searchForm.value.stockOutId}`);
-    }
+    if (searchForm.value.stockOutId) queryParams.push(`stockOutId=${searchForm.value.stockOutId}`);
     if (searchForm.value.stockOutDate) {
-      // Format the date to yyyy-MM-dd for the API
       const formattedDate = new Date(searchForm.value.stockOutDate).toISOString().slice(0, 10);
       queryParams.push(`stockOutDate=${formattedDate}`);
     }
-    if (searchForm.value.status !== null) {
-      queryParams.push(`status=${searchForm.value.status}`);
-    }
-
-    if (queryParams.length > 0) {
-      apiUrl += `?${queryParams.join('&')}`;
-    }
+    if (searchForm.value.status !== null) queryParams.push(`status=${searchForm.value.status}`);
+    if (queryParams.length > 0) apiUrl += `?${queryParams.join('&')}`;
 
     const response = await fetch(apiUrl);
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`获取出库单列表失败: ${response.status} - ${errorData?.message || '未知错误'}`);
-    }
-    const responseData = await response.json().then(res => res.data);
-    outboundOrderList.value = responseData.map(order => ({ ...order, statusText: getStatusText(order.status) }));
+    const responseData = await response.json();
+    outboundOrderList.value = responseData.data.map(order => ({ ...order, statusText: getStatusText(order.status) }));
   } catch (error) {
-    console.error('获取出库单列表失败:', error);
+    console.error('获取���库单列表失败:', error);
     ElMessage.error('获取出库单列表失败');
   }
 };
 
-const fetchOutboundDetailsForView = async (stockOutId) => {
-  if (stockOutId) {
-    try {
-      const response = await fetch(`http://localhost:8090/stock-out/items/${stockOutId}`); // 直接访问获取明细条目的 API
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`获取出库单明细失败: ${response.status} - ${errorData?.message || '未知错误'}`);
-      }
-      const responseData = await response.json();
-      if (responseData.code === 200 && responseData.data) {
-        outboundDetails.value = responseData.data;
-      } else {
-        ElMessage.error(`获取出库单明细失败: ${responseData.msg}`);
-        outboundDetails.value = []; // 清空明细数据
-      }
-    } catch (error) {
-      console.error('获取出库单明细失败:', error);
-      ElMessage.error('获取出库单明细失败');
-      outboundDetails.value = []; // 清空明细数据
-    }
-  } else {
-    outboundDetails.value = []; // 如果没有 ID，清空明细数据
-  }
-};
-const viewOutboundDetails = (stockOutId) => {
-  currentOutboundId.value = stockOutId;
-  fetchOutboundDetailsForView(stockOutId);
-  dialogVisible.value = true;
-};
-
 const fetchSalesOrderList = async () => {
   try {
-    const response = await fetch('http://localhost:8090/sales-order/list'); // 替换为你的实际 API 端点
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`获取销售单列表失败: ${response.status} - ${errorData?.message || '未知错误'}`);
-    }
+    const response = await fetch('http://localhost:8090/sales-order/list');
     const responseData = await response.json();
     if (responseData.code === 200) {
-      salesOrderList.value = responseData.data; // 从 data 字段中获取列表数据
+      salesOrderList.value = responseData.data;
     } else {
       ElMessage.error(`获取销售单列表失败: ${responseData.msg}`);
-      console.error('获取销售单列表失败:', responseData);
     }
   } catch (error) {
-    console.error('获取销售单列表失败:', error);
     ElMessage.error('获取销售单列表失败');
   }
 };
 
 const fetchSalesOrderItems = async (salesOrderId) => {
   try {
-    const response = await fetch(`http://localhost:8090/sales-order/items/${salesOrderId}`); // 替换为你的实际 API 端点
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`获取销售单明细失败: ${response.status} - ${errorData?.message || '未知错误'}`);
-    }
-    const data = await response.json().then(res => res.data);
-    // TODO: 需要从后端获取每个商品的库存数量
-    outboundForm.value.items = data.map(item => ({ ...item, outboundQuantity: item.quantity, stockQuantity: item.stockQuantity })); // 临时库存数据
+    const response = await fetch(`http://localhost:8090/sales-order/items/${salesOrderId}`);
+    const raw = await response.json();
+    const data = raw.data || [];
+    // ✅ 始终创建新数组，防止 Vue 引用复用引起渲染重复
+    outboundForm.value.items = data.map(item => ({
+      productId: item.productId,
+      productName: item.productName,
+      quantity: item.quantity,
+      stockQuantity: item.stockQuantity,
+      outboundQuantity: item.quantity
+    }));
   } catch (error) {
-    console.error('获取销售单明细失败:', error);
     ElMessage.error('获取销售单明细失败');
+    outboundForm.value.items = []; // 清空
   }
 };
 
-onMounted(() => {
-  fetchOutboundOrderList();
-  fetchSalesOrderList();
-});
-
-const createOutboundOrder = () => {
-  createOutboundDialogVisible.value = true;
-};
-
-const showOutboundForm = (row) => {
-  outboundForm.value.salesOrderId = row.salesOrderId;
-  fetchSalesOrderItems(row.salesOrderId);
+const showOutboundForm = async (row) => {
+  saveOutboundFormVisible.value = false;
+  outboundForm.value = { salesOrderId: row.salesOrderId, items: [] };
+  await fetchSalesOrderItems(row.salesOrderId);
+  // ✅ 打印调试一次，避免重复加载
+  console.log('🧾 明细已加载：', outboundForm.value.items);
   saveOutboundFormVisible.value = true;
 };
 
 const saveOutboundOrder = async () => {
   try {
+    // ✅ 确保无重复
+    const uniqueItems = Array.from(new Map(outboundForm.value.items.map(item => [item.productId, item])).values());
+
     const payload = {
       salesOrderId: outboundForm.value.salesOrderId,
-      employeeId: 3, // TODO: 获取当前登录员工的 ID
-      stockOutDate: new Date().toISOString().slice(0, 10), // 设置出库日期
-      status: 0, // 标记为待处理
-      stockOutItems: outboundForm.value.items.map(item => ({
+      employeeId: 3,
+      stockOutDate: new Date().toISOString().slice(0, 10),
+      status: 0,
+      stockOutItems: uniqueItems.map(item => ({
         productId: item.productId,
-        quantity: item.outboundQuantity,
-      })),
+        quantity: item.outboundQuantity
+      }))
     };
 
-    const response = await fetch('http://localhost:8090/stock-out/save', { // 替换为你的实际保存出库单的 API 端点
+    const response = await fetch('http://localhost:8090/stock-out/save', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`保存出库单失败: ${response.status} - ${errorData?.message || '未知错误'}`);
-    }
+    if (!response.ok) throw new Error('保存失败');
 
     ElMessage.success('出库单创建成功');
-    outboundFormVisible.value = false;
+    saveOutboundFormVisible.value = false;
     createOutboundDialogVisible.value = false;
-    await fetchOutboundOrderList(); // 刷新出库单列表
-
+    outboundForm.value = { salesOrderId: null, items: [] };
+    await fetchOutboundOrderList();
   } catch (error) {
     console.error('保存出库单失败:', error);
     ElMessage.error('保存出库单失败');
@@ -297,150 +365,143 @@ const saveOutboundOrder = async () => {
 
 const processOutbound = async () => {
   const hasStockShortage = outboundForm.value.items.some(item => item.outboundQuantity > item.stockQuantity);
-
   if (hasStockShortage) {
-    ElMessageBox.confirm(
-        '检测到部分商品缺货，是否将此出库单标记为缺货？',
-        '缺货提示',
-        {
-          confirmButtonText: '标记缺货',
-          cancelButtonText: '取消',
-          type: 'warning',
-        }
-    ).then(async () => {
-      try {
-        const payload = {
-          stockOutId: currentOutboundId.value,
-          status: 2, // 设置状态为缺货
-          stockOutItems: outboundForm.value.items.map(item => ({
-            productId: item.productId,
-            quantity: item.outboundQuantity,
-          })),
-        };
-        const response = await fetch('http://localhost:8090/stock-out/modify', { // 替换为你的实际 API 端点
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        });
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(`标记缺货失败: ${response.status} - ${errorData?.message || '未知错误'}`);
-        }
-        ElMessage.warning('此出库单已标记为缺货');
-        outboundFormVisible.value = false;
-        await fetchOutboundOrderList(); // 刷新出库单列表
-      } catch (error) {
-        console.error('标记缺货失败:', error);
-        ElMessage.error('标记缺货失败');
-      }
+    ElMessageBox.confirm('检测到部分商品缺货，是否将此出库单标记为缺货？', '缺货提示', {
+      confirmButtonText: '标记缺货', cancelButtonText: '取消', type: 'warning'
+    }).then(async () => {
+      await markOutOfStock();
     }).catch(() => {
       ElMessage.info('已取消操作');
     });
-    return; // 停止当前出库处理流程
+    return;
   }
+  await confirmNormalOutbound();
+};
 
-  // 如果没有缺货，则执行正常的出库处理并更新库存
+const markOutOfStock = async () => {
+  const payload = {
+    stockOutId: currentOutboundId.value,
+    status: "2",
+  };
+  await fetch('http://localhost:8090/stock-out/updateStatus', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+  });
+  // 同步更新销售单状态为缺货（假设缺货状态为2，按实际后端定义调整）
   try {
-    const stockOutPayload = {
-      stockOutId: currentOutboundId.value,
-      salesOrderId: outboundForm.value.salesOrderId,
-      employeeId: 3, // TODO: 获取当前登录员工的 ID
-      stockOutDate: new Date().toISOString(),
-      status: 1,
-      stockOutItems: outboundForm.value.items.map(item => ({
-        productId: item.productId,
-        quantity: item.outboundQuantity,
-      })),
-    };
-    const stockOutResponse = await fetch('http://localhost:8090/stock-out/modify', { // 替换为你的实际 API 端点
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(stockOutPayload),
-    });
-    if (!stockOutResponse.ok) {
-      const errorData = await stockOutResponse.json();
-      throw new Error(`出库处理失败: ${stockOutResponse.status} - ${errorData?.message || '未知错误'}`);
-    }
-
-    // 出库成功后，更新库存
-    for (const item of outboundForm.value.items) {
-      const updateStockPayload = {
-        productId: item.productId,
-        stockQuantity: item.stockQuantity-item.outboundQuantity, // 负数表示减少库存
-      };
-      const updateStockResponse = await fetch('http://localhost:8090/product/modify', { // 替换为你的实际更新库存 API 端点
+    const outbound = outboundOrderList.value.find(o => o.stockOutId === currentOutboundId.value);
+    if (outbound && outbound.salesOrderId) {
+      await fetch('http://localhost:8090/sales-order/updateStatus', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updateStockPayload),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ salesOrderId: outbound.salesOrderId, status: "2" })
       });
-      if (!updateStockResponse.ok) {
-        const errorData = await updateStockResponse.json();
-        throw new Error(`更新商品 ${item.productName} 库存失败: ${updateStockResponse.status} - ${errorData?.message || '未知错误'}`);
-      }
     }
-
-    ElMessage.success('出库处理成功，库存已更新');
-    outboundFormVisible.value = false;
-    await fetchOutboundOrderList(); // 刷新出库单列表
-  } catch (error) {
-    console.error('出库处理失败:', error);
-    ElMessage.error('出库处理失败');
+  } catch (e) {
+    // 可选：错误提示
+    ElMessage.warning('销售单状态同步失败');
   }
+  ElMessage.warning('此出库单已标记为缺货');
+  outboundFormVisible.value = false;
+  await fetchOutboundOrderList();
 };
 
-const getStatusText = (status) => {
-  // TODO: 根据实际状态值返回对应的文本
-  return status === 0 ? '待处理' : status === 1 ? '已出库' : '缺货';
+const confirmNormalOutbound = async () => {
+  const payload = {
+    stockOutId: currentOutboundId.value,
+    salesOrderId: outboundForm.value.salesOrderId,
+    employeeId: 3,
+    stockOutDate: new Date().toISOString(),
+    status: 1,
+    stockOutItems: outboundForm.value.items.map(item => ({ productId: item.productId, quantity: item.outboundQuantity }))
+  };
+  await fetch('http://localhost:8090/stock-out/modify', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+  });
+  // 同步更新销售单状态
+  try {
+    const outbound = outboundOrderList.value.find(o => o.stockOutId === currentOutboundId.value);
+    if (outbound && outbound.salesOrderId) {
+      await fetch('http://localhost:8090/sales-order/updateStatus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ salesOrderId: outbound.salesOrderId, status: "1" })
+      });
+    }
+  } catch (e) {
+    // 可选：错误提示
+    ElMessage.warning('销售单状态同步失败');
+  }
+  for (const item of outboundForm.value.items) {
+    const stockPayload = { productId: item.productId, stockQuantity: item.stockQuantity - item.outboundQuantity };
+    await fetch('http://localhost:8090/product/modify', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(stockPayload)
+    });
+  }
+  ElMessage.success('出库处理成功，库存已更新');
+  outboundFormVisible.value = false;
+  await fetchOutboundOrderList();
 };
+
+const getStatusText = (status) => status === 0 ? '待处理' : status === 1 ? '已出库' : '缺货';
 
 const deleteOutbound = (stockOutId) => {
-  ElMessageBox.confirm(
-      '确定要删除此出库单吗?',
-      '警告',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }
-  )
-      .then(async () => {
-        try {
-          const response = await fetch(`http://localhost:8090/stock-out/delete?id=${stockOutId}`, { // 替换为你的实际 API 端点
-            method: 'GET', // 或者 DELETE，根据你的后端 API 定义
-          });
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`删除出库单失败: ${response.status} - ${errorData?.message || '未知错误'}`);
-          }
-          const responseData = await response.json();
-          if (responseData.code === 200) {
-            ElMessage.success('删除成功');
-            await fetchOutboundOrderList(); // 刷新列表
-          } else {
-            ElMessage.error(`删除出库单失败: ${responseData.msg}`);
-            console.error('删除出库单失败:', responseData);
-          }
-        } catch (error) {
-          console.error('删除出库单失败:', error);
-          ElMessage.error('删除出库单失败');
-        }
-      })
-      .catch(() => {
-        ElMessage.info('已取消删除');
-      });
+  ElMessageBox.confirm('确定要删除此出库单吗?', '警告', {
+    confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning'
+  }).then(async () => {
+    await fetch(`http://localhost:8090/stock-out/delete?id=${stockOutId}`, { method: 'GET' });
+    ElMessage.success('删除成功');
+    await fetchOutboundOrderList();
+  }).catch(() => {
+    ElMessage.info('已取消删除');
+  });
+};
+
+const viewOutboundDetails = (stockOutId) => {
+  currentOutboundId.value = stockOutId;
+  fetchOutboundDetailsForView(stockOutId);
+  dialogVisible.value = true;
+};
+
+const fetchOutboundDetailsForView = async (stockOutId) => {
+  try {
+    const response = await fetch(`http://localhost:8090/stock-out/items/${stockOutId}`);
+    const responseData = await response.json();
+    outboundDetails.value = responseData.code === 200 ? responseData.data : [];
+  } catch (error) {
+    ElMessage.error('获取出库单明细失败');
+    outboundDetails.value = [];
+  }
+};
+
+const createOutboundOrder = () => {
+  createOutboundDialogVisible.value = true;
 };
 
 const handleOutbound = (row) => {
-  currentOutboundId.value = row.stockOutId; // 设置当前出库单的 ID
-  outboundForm.value.salesOrderId = row.salesOrderId;
+  currentOutboundId.value = row.stockOutId;
+  outboundForm.value = { salesOrderId: row.salesOrderId, items: [] };
   fetchSalesOrderItems(row.salesOrderId);
   outboundFormVisible.value = true;
 };
 
+// 查询按钮：重置页码即可
+const handleSearch = () => {
+  outboundCurrentPage.value = 1;
+};
+
+// 新增：销售单过滤表单
+const salesOrderSearchForm = ref({
+  customerName: '',
+  saleDate: null
+});
+
+// 查询按钮：重置页码即可
+const handleSalesOrderSearch = () => {
+  salesCurrentPage.value = 1;
+};
+
+onMounted(() => {
+  fetchOutboundOrderList();
+  fetchSalesOrderList();
+});
 </script>

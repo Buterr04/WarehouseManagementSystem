@@ -90,4 +90,11 @@ public class StockOutServiceImpl extends ServiceImpl<StockOutMapper, StockOut> i
         }
         return false;
     }
+
+    @Override
+    public boolean updateStatusById(Integer stockOutId, String status) {
+        stockOutMapper.updateStatusById(stockOutId, status);
+        return true;
+    }
+
 }

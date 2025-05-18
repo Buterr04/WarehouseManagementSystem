@@ -16,6 +16,7 @@ import java.util.List;
 public interface StockOutService extends IService<StockOut> {
     boolean saveStockOutWithItems(StockOut stockOut);
     boolean updateStockOutWithItems(StockOut stockOut);
+    boolean updateStatusById(Integer stockOutId, String status);
     List<StockOut> list();
     List<StockOut> getStockOutListWithSaleDate();
     StockOut findByIdWithSaleDate(Integer stockOutId);
