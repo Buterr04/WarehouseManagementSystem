@@ -28,7 +28,7 @@
               />
             </template>
           </el-table-column>
-          <el-table-column label="数量" width="120">
+          <el-table-column label="数量" width="200">
             <template #default="scope">
               <el-input-number v-model="scope.row.quantity" :min="1" />
             </template>
@@ -252,6 +252,7 @@ const generateSalesOrder = async () => {
       salesOrderId: '1',
       customerId: salesOrderForm.value.customerId,
       saleDate: new Date().toISOString().slice(0, 10),
+      status:'0',
       salesOrderItems: salesOrderForm.value.items.map(item => ({
         salesItemId: '1',
         productId: item.productId,

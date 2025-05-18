@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -109,4 +110,15 @@ public class SalesOrderController {
         List<SalesOrderItem> itemsWithProductInfo = salesOrderItemService.getSalesOrderItemsWithProductInfo(salesOrderId);
         return Result.success(itemsWithProductInfo);
     }
+
+    @PostMapping("/updateStatus")
+    public Result updateStatus(@RequestBody Map<String, Object> data) {
+        Integer salesOrderId = (Integer) data.get("salesOrderId");
+        String status = (String) data.get("status");
+
+        boolean success = salesOrderService.updateStatusById(salesOrderId, status);
+        return success ? Result.success() : Result.fail();
+    }
+
+
 }

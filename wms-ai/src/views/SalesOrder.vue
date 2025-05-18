@@ -26,6 +26,11 @@
       <el-table-column prop="salesOrderId" label="销售单 ID" width="120"></el-table-column>
       <el-table-column prop="customerName" label="客户姓名"></el-table-column>
       <el-table-column prop="saleDate" label="销售日期"></el-table-column>
+      <el-table-column prop="status" label="状态">
+        <template #default="scope">
+          <span>{{ scope.row.status === 1 ? '已完成' : '待处理' }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" width="200">
         <template #default="scope">
           <el-button size="small" @click="viewSalesOrderDetails(scope.row.salesOrderId)">查看</el-button>

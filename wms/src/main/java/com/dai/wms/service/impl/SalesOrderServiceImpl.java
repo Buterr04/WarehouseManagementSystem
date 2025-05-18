@@ -79,4 +79,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderMapper, SalesOr
         }
         return false;
     }
+
+    @Override
+    public boolean updateStatusById(Integer salesOrderId, String status) {
+        salesOrderMapper.updateStatusById(salesOrderId, status);
+        return true;
+    }
+
+
 }

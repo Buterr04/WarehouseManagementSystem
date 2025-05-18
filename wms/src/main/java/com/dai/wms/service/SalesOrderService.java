@@ -15,6 +15,7 @@ import java.util.List;
 public interface SalesOrderService extends IService<SalesOrder> {
     boolean saveSalesOrderWithItems(SalesOrder salesOrder);
     boolean updateSalesOrderWithItems(SalesOrder salesOrder);
+    boolean updateStatusById(Integer salesOrderId, String status);
     List<SalesOrder> list();
     List<SalesOrder> getSalesOrderListWithCustomerName();
     SalesOrder findByIdWithCustomer(Integer salesOrderId);

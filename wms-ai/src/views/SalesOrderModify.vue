@@ -1,20 +1,11 @@
 <template>
   <div>
     <h1>编辑销售单</h1>
-    <p v-if="salesOrderId">销售单 ID: {{ salesOrderId }}  销售日期: {{ salesOrderDate }}</p>
+    <p v-if="salesOrderId">销售单 ID: {{ salesOrderId }} 销售日期: {{ salesOrderDate }}</p>
     <el-form :model="salesOrderForm" label-width="120px">
       <el-form-item label="客户姓名">
-        <el-select
-            v-model="salesOrderForm.customerId"
-            placeholder="选择客户"
-            style="width: 300px;"
-        >
-          <el-option
-              v-for="customer in customerList"
-              :key="customer.customerId"
-              :value="customer.customerId"
-              :label="customer.customerName"
-          />
+        <el-select v-model="salesOrderForm.customerId" placeholder="选择客户" style="width: 300px;">
+          <el-option v-for="customer in customerList" :key="customer.customerId" :value="customer.customerId" :label="customer.customerName" />
         </el-select>
         <el-button @click="openCustomerDialog">新增客户</el-button>
       </el-form-item>
@@ -24,34 +15,24 @@
           <el-table-column label="商品">
             <template #default="scope">
               <el-button @click="openProductDialog(scope.$index)">
-                {{ getProductNameAndSpecifications(scope.row.productId) || '选择商品' }}
+                {{ scope.row.productName ? `${scope.row.productName} (${scope.row.specifications})` : '选择商品' }}
               </el-button>
             </template>
           </el-table-column>
           <el-table-column prop="quantity" label="数量" width="200">
             <template #default="scope">
-              <el-input-number
-                  v-model="scope.row.quantity"
-                  :min="1"
-                  @change="calculateSubtotal(scope.row)"
-              />
+              <el-input-number v-model="scope.row.quantity" :min="1" @change="calculateSubtotal(scope.row)" />
             </template>
           </el-table-column>
           <el-table-column prop="unitPrice" label="单价" width="120">
-            <template #default="scope">{{ getProductUnitPrice(scope.row.productId) }}</template>
+            <template #default="scope">{{ scope.row.unitPrice }}</template>
           </el-table-column>
           <el-table-column label="小计" width="150">
-            <template #default="scope">{{ scope.row.quantity * getProductUnitPrice(scope.row.productId) }}</template>
+            <template #default="scope">{{ scope.row.quantity * scope.row.unitPrice }}</template>
           </el-table-column>
           <el-table-column label="操作" width="100">
             <template #default="scope">
-              <el-button
-                  size="small"
-                  type="danger"
-                  @click="removeSalesItem(scope.$index)"
-              >
-                移除
-              </el-button>
+              <el-button size="small" type="danger" @click="removeSalesItem(scope.$index)">移除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -63,7 +44,7 @@
       </el-form-item>
 
       <div style="text-align: right; margin-top: 20px; font-size: 1.2em;">
-        总价：￥{{ totalPrice.value }}
+        总价：￥{{ totalPrice }}
       </div>
     </el-form>
 
@@ -115,120 +96,77 @@ import { useRoute } from 'vue-router';
 
 const route = useRoute();
 const salesOrderId = ref(route.params.id);
-
-const salesOrderForm = ref({
-  customerId: null,
-  items: [],
-  saleDate: null,
-});
+const salesOrderForm = ref({ customerId: null, items: [], saleDate: null, status: null });
 const customerList = ref([]);
 const productList = ref([]);
 const customerDialogVisible = ref(false);
-const newCustomerForm = ref({
-  name: '',
-  phone: '',
-  contactAddress: '',
-});
+const newCustomerForm = ref({ name: '', phone: '', contactAddress: '' });
 const productDialogVisible = ref(false);
 const currentItemIndex = ref(null);
 
-const calculateSubtotal = (row) => {
-  console.log('数量已改变:', row.quantity);
-};
+const salesOrderDate = computed(() => salesOrderForm.value.saleDate || new Date().toISOString().split('T')[0]);
 
 const totalPrice = computed(() => {
-  return salesOrderForm.value.items.reduce((sum, item) => sum + (item.quantity * getProductUnitPrice(item.productId)), 0);
+  return salesOrderForm.value.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
 });
 
-const getProductUnitPrice = (productId) => {
-  const product = productList.value.find(p => p.productId === productId);
-  return product ? product.unitPrice : 0;
+const calculateSubtotal = () => {
+  // 可扩展逻辑
 };
-
-const getProductNameAndSpecifications = (productId) => {
-  const product = productList.value.find(p => p.productId === productId);
-  return product ? `${product.productName} (${product.specifications})` : '';
-};
-
-/*
-const updateUnitPrice = (item) => {
-  const selectedProduct = productList.value.find(product => product.productId === item.productId);
-  if (selectedProduct) {
-    item.unitPrice = selectedProduct.unitPrice;
-  } else {
-    item.unitPrice = 0;
-  }
-};
- */
 
 const fetchCustomerList = async () => {
   try {
-    const response = await fetch('http://localhost:8090/customer/list');
-    if (!response.ok) {
-      throw new Error(`获取客户列表失败: ${response.status}`);
-    }
-    const data = await response.json();
-    customerList.value = data;
-  } catch (error) {
-    console.error('获取客户列表失败:', error);
+    const res = await fetch('http://localhost:8090/customer/list');
+    customerList.value = await res.json();
+  } catch (err) {
     ElMessage.error('获取客户列表失败');
   }
 };
 
 const fetchProductList = async () => {
   try {
-    const response = await fetch('http://localhost:8090/product/list');
-    if (!response.ok) {
-      throw new Error(`获取商品列表失败: ${response.status}`);
-    }
-    const data = await response.json();
-    productList.value = data;
-  } catch (error) {
-    console.error('获取商品列表失败:', error);
+    const res = await fetch('http://localhost:8090/product/list');
+    productList.value = await res.json();
+  } catch (err) {
     ElMessage.error('获取商品列表失败');
   }
 };
 
 const fetchSalesOrderDetails = async () => {
-  if (salesOrderId.value) {
-    try {
-      const response = await fetch(`http://localhost:8090/sales-order/items/${salesOrderId.value}`);
-      if (!response.ok) {
-        throw new Error(`获取销售单明细失败: ${response.status}`);
-      }
-      const responseData = await response.json();
-      if (responseData.code === 200 && responseData.data) {
-        salesOrderForm.value.items = responseData.data.map(item => ({
+  if (!salesOrderId.value) return;
+  try {
+    const detailRes = await fetch(`http://localhost:8090/sales-order/items/${salesOrderId.value}`);
+    const detailData = await detailRes.json();
+    if (detailData.code === 200) {
+      salesOrderForm.value.items = detailData.data.map(item => {
+        const matchedProduct = productList.value.find(p => Number(p.productId) === Number(item.productId));
+        return {
           salesItemId: item.salesItemId,
-          productName: item.productName,
           productId: item.productId,
           quantity: item.quantity,
-          unitPrice: item.unitPrice || item.salePrice || 0, // 优先使用 unitPrice，其次 salePrice，都没有则默认为 0
-          salePrice: item.salePrice
-        }));
-        const mainResponse = await fetch(`http://localhost:8090/sales-order/${salesOrderId.value}`);
-        if (mainResponse.ok) {
-          const mainData = await mainResponse.json();
-          salesOrderForm.value.customerId = mainData.data.customerId;
-          salesOrderForm.value.saleDate = mainData.data.saleDate ? new Date(mainData.data.saleDate).toISOString().split('T')[0] : null;
-        }
-      } else {
-        ElMessage.error(`获取销售单明细失败: ${responseData.msg}`);
-      }
-    } catch (error) {
-      console.error('获取销售单明细失败:', error);
-      ElMessage.error('获取销售单详情失败');
+          unitPrice: item.unitPrice || item.salePrice || 0,
+          productName: matchedProduct?.productName || '未知商品',
+          specifications: matchedProduct?.specifications || ''
+        };
+      });
+
+
+      const mainRes = await fetch(`http://localhost:8090/sales-order/${salesOrderId.value}`);
+      const mainData = await mainRes.json();
+      salesOrderForm.value.customerId = mainData.data.customerId;
+      salesOrderForm.value.saleDate = mainData.data.saleDate?.split('T')[0];
+    } else {
+      ElMessage.error(detailData.msg);
     }
-  } else {
-    salesOrderForm.value.saleDate = new Date().toISOString().split('T')[0];
+  } catch (err) {
+    ElMessage.error('获取销售单失败');
   }
 };
 
-onMounted(() => {
-  fetchCustomerList();
-  fetchProductList();
-
-  fetchSalesOrderDetails();
+onMounted(async () => {
+  await fetchCustomerList();
+  await fetchProductList();
+  await fetchSalesOrderDetails();
 });
 
 const openCustomerDialog = () => {
@@ -238,34 +176,24 @@ const openCustomerDialog = () => {
 
 const saveNewCustomer = async () => {
   try {
-    const payload = {
-      customerName: newCustomerForm.value.name,
-      contactPhone: newCustomerForm.value.phone,
-      contactAddress: newCustomerForm.value.contactAddress,
-    };
-    const response = await fetch('http://localhost:8090/customer/save', {
+    const payload = { customerName: newCustomerForm.value.name, contactPhone: newCustomerForm.value.phone, contactAddress: newCustomerForm.value.contactAddress };
+    await fetch('http://localhost:8090/customer/save', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     });
-    if (!response.ok) {
-      throw new Error(`保存客户失败: ${response.status}`);
-    }
-    const newCustomer = await response.json();
-    customerList.value.push(newCustomer);
+    await fetchCustomerList();
+    const added = customerList.value.find(c => c.customerName === payload.customerName);
+    if (added) salesOrderForm.value.customerId = added.customerId;
     customerDialogVisible.value = false;
     ElMessage.success('客户添加成功');
-    await fetchCustomerList();
-  } catch (error) {
-    console.error('保存客户失败:', error);
+  } catch (err) {
     ElMessage.error('保存客户失败');
   }
 };
 
 const addSalesItem = () => {
-  salesOrderForm.value.items.push({ productId: null, quantity: 1, unitPrice: 0 });
+  salesOrderForm.value.items.push({ productId: null, quantity: 1, unitPrice: 0, productName: '', specifications: '' });
 };
 
 const removeSalesItem = (index) => {
@@ -279,8 +207,12 @@ const openProductDialog = (index) => {
 
 const selectProduct = (product) => {
   if (currentItemIndex.value !== null) {
-    salesOrderForm.value.items[currentItemIndex.value].productId = product.productId;
-    salesOrderForm.value.items[currentItemIndex.value].unitPrice = product.unitPrice;
+    const item = salesOrderForm.value.items[currentItemIndex.value];
+    item.productId = product.productId;
+    item.unitPrice = product.unitPrice;
+    item.productName = product.productName;
+    item.specifications = product.specifications;
+    calculateSubtotal(item);
   }
   productDialogVisible.value = false;
   currentItemIndex.value = null;
@@ -289,30 +221,25 @@ const selectProduct = (product) => {
 const updateSalesOrder = async () => {
   try {
     const payload = {
-      salesOrderId: salesOrderId.value || null, // 如果是新增则为 null
+      salesOrderId: salesOrderId.value,
       customerId: salesOrderForm.value.customerId,
       saleDate: salesOrderForm.value.saleDate,
+      status: salesOrderForm.value.status,
       salesOrderItems: salesOrderForm.value.items.map((item, index) => ({
-        salesItemId: item.salesItemId || index + 1, // 如果是已存在的 item，则保留 ID，否则前端生成
+        salesItemId: item.salesItemId || index + 1,
         productId: item.productId,
         quantity: item.quantity,
-        salePrice: item.unitPrice // 这里假设前端的 unitPrice 对应后端的 salePrice
-      })),
+        salePrice: item.unitPrice
+      }))
     };
-    const response = await fetch('http://localhost:8090/sales-order/modify', {
+   await fetch('http://localhost:8090/sales-order/modify', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     });
-    if (!response.ok) {
-      throw new Error(`更新销售单失败: ${response.status}`);
-    }
     ElMessage.success('销售单更新成功');
     router.push('/sales-management/sales-order');
-  } catch (error) {
-    console.error('更新销售单失败:', error);
+  } catch (err) {
     ElMessage.error('更新销售单失败');
   }
 };

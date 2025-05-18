@@ -27,12 +27,14 @@ public class SalesOrder implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @TableId(value = "sales_order_id")
+    @TableId(value = "sales_order_id", type = IdType.AUTO)
     private Integer salesOrderId;
 
     private Integer customerId;
 
     private LocalDate saleDate;
+
+    private Integer status;
 
     @TableField(exist = false)
     private String customerName; // 客户名称，非数据库字段，用于前端展示
