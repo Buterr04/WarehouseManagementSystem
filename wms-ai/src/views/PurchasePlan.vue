@@ -345,7 +345,7 @@ const editPlan = async (row) => {
   // 先获取采购计划明细
   const res = await fetch(`http://localhost:8090/purchase-plan/items/${row.planId}`);
   const data = await res.json();
-  // 再获取出库单明细（用于获取最新库存和出库数量）
+  // 再获取出库单明细（用于获取最新库存和出库数量和单价）
   const outRes = await fetch(`http://localhost:8090/stock-out/items/${row.stockOutId}`);
   const outData = await outRes.json();
   // 构建商品ID到出库单明细的映射
@@ -353,7 +353,7 @@ const editPlan = async (row) => {
   outData.data.forEach(item => {
     outMap[item.productId] = item;
   });
-  // 用出库单明细的库存和出库数量来计算缺货数量，和新建逻辑一致
+  // 用出库单明细的库存、出库数量、单价来计算缺货数量，和新建逻辑一致
   planForm.value = {
     planId: row.planId,
     stockOutId: row.stockOutId,
@@ -362,11 +362,14 @@ const editPlan = async (row) => {
       const stockQuantity = outItem.stockQuantity !== undefined ? outItem.stockQuantity : (p.stockQuantity !== undefined ? p.stockQuantity : 0);
       const quantity = outItem.quantity !== undefined ? outItem.quantity : (p.quantity !== undefined ? p.quantity : 0);
       const shortage = quantity - stockQuantity;
+      // 优先取出库单明细的 unitPrice，如果没有则用采购计划明细的
+      const unitPrice = outItem.unitPrice !== undefined ? outItem.unitPrice : (p.unitPrice !== undefined ? p.unitPrice : 0);
       return {
         ...p,
         stockQuantity,
         shortageQuantity: shortage > 0 ? shortage : 0,
-        planQuantity: p.planQuantity
+        planQuantity: p.planQuantity,
+        unitPrice
       };
     }),
   };

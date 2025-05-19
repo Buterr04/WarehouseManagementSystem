@@ -36,7 +36,13 @@ public class PurchaseOrder implements Serializable {
 
     private LocalDate deliveryDate;
 
+    private String supplierName; // 非数据库字段，表示供应商名称
+
+    private Integer status;
+
     @TableField(exist = false)
     private List<PurchaseOrderItem> purchaseOrderItems;
+
+
 
 }

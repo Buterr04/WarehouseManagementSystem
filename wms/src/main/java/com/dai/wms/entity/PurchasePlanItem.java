@@ -39,4 +39,8 @@ public class PurchasePlanItem implements Serializable {
 
     private Integer supplierId; // 非数据库字段
 
+    private Integer unitPrice; // 非数据库字段
+
+    private  Integer status;
+
 }

@@ -90,4 +90,11 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
     public PurchaseOrder getPurchaseOrderWithDetails(Integer purchaseOrderId) {
         return purchaseOrderMapper.selectPurchaseOrderWithDetails(purchaseOrderId); //   新增方法的实现
     }
+
+    @Override
+    public boolean updateStatusById(Integer orderId, String status) {
+        purchaseOrderMapper.updateStatusById(orderId, status);
+        return true;
+    }
+
 }

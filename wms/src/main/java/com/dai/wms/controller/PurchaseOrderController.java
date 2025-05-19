@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -93,4 +94,14 @@ public class PurchaseOrderController {
         List<PurchaseOrderItem> items = purchaseOrderItemService.getPurchaseOrderItemsWithProductInfo(purchaseOrderId);
         return Result.success(items);
     }
+
+    @PostMapping("/updateStatus")
+    public Result updateStatus(@RequestBody Map<String, Object> data) {
+        Integer orderId = (Integer) data.get("orderId");
+        String status = (String) data.get("status");
+
+        boolean success = purchaseOrderService.updateStatusById(orderId, status);
+        return success ? Result.success() : Result.fail();
+    }
+
 }

@@ -281,7 +281,7 @@ const fetchOutboundOrderList = async () => {
     const responseData = await response.json();
     outboundOrderList.value = responseData.data.map(order => ({ ...order, statusText: getStatusText(order.status) }));
   } catch (error) {
-    console.error('获取���库单列表失败:', error);
+    console.error('获取出库单列表失败:', error);
     ElMessage.error('获取出库单列表失败');
   }
 };
@@ -399,6 +399,24 @@ const markOutOfStock = async () => {
   } catch (e) {
     // 可选：错误提示
     ElMessage.warning('销售单状态同步失败');
+  }
+  // 新增：自动计算缺货数量并调用 updateShortage 接口
+  try {
+    for (const item of outboundForm.value.items) {
+      if (item.outboundQuantity > item.stockQuantity) {
+        const shortQuantity = item.outboundQuantity - item.stockQuantity;
+        await fetch('http://localhost:8090/product/updateShortage', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            productId: item.productId,
+            shortQuantity: shortQuantity
+          })
+        });
+      }
+    }
+  } catch (e) {
+    ElMessage.warning('商品缺货数量更新失败');
   }
   ElMessage.warning('此出库单已标记为缺货');
   outboundFormVisible.value = false;

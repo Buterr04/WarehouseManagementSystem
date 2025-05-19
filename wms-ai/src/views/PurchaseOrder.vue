@@ -10,10 +10,10 @@
         <el-option label="部分缺货" :value="2" />
       </el-select>
       <el-button @click="fetchOrderList">查询</el-button>
-      <el-button type="primary" @click="openSelectPlanDialog">新建采购订单</el-button>
+      <el-button type="primary" @click="navigateToPurchaseForm">新建采购订单</el-button>
     </div>
 
-    <el-table :data="orderList" style="width: 100%">
+    <el-table :data="pagedOrderList" style="width: 100%">
       <el-table-column prop="orderId" label="订单号" width="120" />
       <el-table-column prop="supplierName" label="供应商" width="180" />
       <el-table-column prop="orderDate" label="下单日期" width="150" />
@@ -26,54 +26,16 @@
         </template>
       </el-table-column>
     </el-table>
+    <el-pagination
+      background
+      layout="prev, pager, next"
+      :total="filteredOrderList.length"
+      :page-size="orderPageSize"
+      :current-page="orderCurrentPage"
+      @current-change="handleOrderPageChange"
+      style="margin: 16px 0; text-align: right;"
+    />
 
-    <!-- 选择采购计划弹窗 -->
-    <el-dialog v-model="selectPlanDialogVisible" title="选择采购计划" width="80%">
-      <el-table :data="planList" style="width: 100%">
-        <el-table-column prop="planId" label="计划单号" width="120" />
-        <el-table-column prop="purchaseDate" label="计划日期" width="150" />
-        <el-table-column prop="statusText" label="计划状态" />
-        <el-table-column label="操作" width="150" fixed="right">
-          <template #default="scope">
-            <el-button size="small" @click="loadPlanItems(scope.row)">选择</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="selectPlanDialogVisible = false">取消</el-button>
-        </span>
-      </template>
-    </el-dialog>
-
-    <!-- 填写采购订单 -->
-    <el-dialog v-model="createDialogVisible" title="新建采购订单" width="80%">
-      <el-form :model="orderForm" label-width="100px">
-        <el-form-item label="供应商">
-          <el-select v-model="orderForm.supplierId" placeholder="选择供应商">
-            <el-option v-for="s in supplierList" :key="s.id" :label="s.name" :value="s.id" />
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <el-table :data="orderForm.items" style="width: 100%">
-        <el-table-column prop="productId" label="商品ID" />
-        <el-table-column prop="productName" label="商品名称" />
-        <el-table-column prop="planQuantity" label="计划数量" />
-        <el-table-column label="采购数量">
-          <template #default="scope">
-            <el-input-number v-model="scope.row.orderQuantity" :min="0" :max="scope.row.planQuantity" />
-          </template>
-        </el-table-column>
-      </el-table>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="createDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="saveOrder">保存</el-button>
-        </span>
-      </template>
-    </el-dialog>
-
-    <!-- 订单明细 -->
     <el-dialog v-model="dialogVisible" title="采购订单明细" width="60%">
       <el-table :data="orderDetails" style="width: 100%">
         <el-table-column prop="productId" label="商品ID" />
@@ -88,7 +50,6 @@
       </template>
     </el-dialog>
 
-    <!-- 处理订单 -->
     <el-dialog v-model="handleDialogVisible" title="确认收货" width="80%">
       <el-table :data="orderForm.items" style="width: 100%">
         <el-table-column prop="productId" label="商品ID" />
@@ -110,28 +71,72 @@
   </div>
 </template>
 
-
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router'; // 引入 useRouter
 import { ElMessage, ElMessageBox } from 'element-plus';
+
+const router = useRouter(); // 获取 router 实例
 
 const orderList = ref([]);
 const orderDetails = ref([]);
-const planList = ref([]);
-const supplierList = ref([]);
 const searchForm = ref({ orderId: '', orderDate: null, status: null });
 const orderForm = ref({ supplierId: null, items: [] });
 
 const dialogVisible = ref(false);
-const createDialogVisible = ref(false);
 const handleDialogVisible = ref(false);
-const selectPlanDialogVisible = ref(false);
 
 // 公共函数
 const extractArray = (data) => Array.isArray(data?.data) ? data.data : [];
 
 const getStatusText = (status) => {
   return status === 0 ? '待收货' : status === 1 ? '已完成' : '部分缺货';
+};
+
+// 分页相关
+const orderCurrentPage = ref(1);
+const orderPageSize = ref(10);
+
+// 过滤（如需后续扩展搜索条件）
+const filteredOrderList = computed(() => {
+  // 格式化为 yyyy-MM-dd
+  const formatDate = (d) => {
+    if (!d) return '';
+    if (typeof d === 'string') {
+      return d.slice(0, 10);
+    }
+    if (d instanceof Date) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    return '';
+  };
+  return orderList.value.filter(order => {
+    if (searchForm.value.orderId && !String(order.orderId).includes(searchForm.value.orderId)) {
+      return false;
+    }
+    if (searchForm.value.orderDate) {
+      const searchDateStr = formatDate(searchForm.value.orderDate);
+      const orderDateStr = formatDate(order.orderDate);
+      if (orderDateStr !== searchDateStr) return false;
+    }
+    if (searchForm.value.status !== null && searchForm.value.status !== '' && order.status !== searchForm.value.status) {
+      return false;
+    }
+    return true;
+  });
+});
+
+const pagedOrderList = computed(() => {
+  const start = (orderCurrentPage.value - 1) * orderPageSize.value;
+  const end = start + orderPageSize.value;
+  return filteredOrderList.value.slice(start, end);
+});
+
+const handleOrderPageChange = (page) => {
+  orderCurrentPage.value = page;
 };
 
 // 查询采购订单列表
@@ -143,81 +148,15 @@ const fetchOrderList = async () => {
       ...o,
       statusText: getStatusText(o.status),
     }));
+    orderCurrentPage.value = 1; // 查询后重置页码
   } catch (err) {
     ElMessage.error('获取订单失败: ' + err.message);
   }
 };
 
-// 查询采购计划列表（待处理）
-const openSelectPlanDialog = async () => {
-  try {
-    const res = await fetch('http://localhost:8090/purchase-plan/list');
-    const data = await res.json();
-    planList.value = extractArray(data).filter(p => p.status === 0).map(p => ({
-      ...p,
-      statusText: '待处理',
-    }));
-    selectPlanDialogVisible.value = true;
-  } catch (err) {
-    ElMessage.error('加载采购计划失败: ' + err.message);
-  }
-};
-
-// 加载选中的采购计划明细
-const loadPlanItems = async (planRow) => {
-  try {
-    const itemRes = await fetch(`http://localhost:8090/purchase-plan/items/${planRow.planId}`);
-    const itemData = await itemRes.json();
-    const items = extractArray(itemData).map(i => ({
-      ...i,
-      orderQuantity: i.planQuantity,
-    }));
-
-    const supplierRes = await fetch('http://localhost:8090/supplier/list');
-    supplierList.value = extractArray(await supplierRes.json());
-
-    orderForm.value = {
-      supplierId: null,
-      items,
-    };
-
-    selectPlanDialogVisible.value = false;
-    createDialogVisible.value = true;
-  } catch (err) {
-    ElMessage.error('加载采购计划明细失败: ' + err.message);
-  }
-};
-
-// 保存采购订单
-const saveOrder = async () => {
-  const payload = {
-    supplierId: orderForm.value.supplierId,
-    orderDate: new Date().toISOString().slice(0, 10),
-    status: 0,
-    items: orderForm.value.items
-        .filter(i => i.orderQuantity > 0)
-        .map(i => ({
-          productId: i.productId,
-          quantity: i.orderQuantity,
-        })),
-  };
-  try {
-    const res = await fetch('http://localhost:8090/purchase-order/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    const data = await res.json();
-    if (data.code === 200) {
-      ElMessage.success('订单创建成功');
-      createDialogVisible.value = false;
-      fetchOrderList();
-    } else {
-      throw new Error(data.msg || '未知错误');
-    }
-  } catch (err) {
-    ElMessage.error('保存失败: ' + err.message);
-  }
+// 导航到 PurchaseForm 页面
+const navigateToPurchaseForm = () => {
+  router.push({ name: 'create-purchase-order' }); // 假设你的 PurchaseForm 路由 name 是 'PurchaseForm'
 };
 
 // 查看订单明细
@@ -287,7 +226,7 @@ const deleteOrder = (orderId) => {
     type: 'warning',
   }).then(async () => {
     try {
-      const res = await fetch(`http://localhost:8090/purchase-order/delete?id=${orderId}`);
+      const res = await fetch(`http://localhost:8090/purchase-order/delete?purchaseOrderId=${orderId}`);
       const data = await res.json();
       if (data.code === 200) {
         ElMessage.success('删除成功');

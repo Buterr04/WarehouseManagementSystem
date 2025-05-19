@@ -20,4 +20,6 @@ public interface PurchaseOrderService extends IService<PurchaseOrder> {
     List<PurchaseOrder> list();
     PurchaseOrder findByIdWithItems(Integer purchaseOrderId);
     PurchaseOrder getPurchaseOrderWithDetails(Integer purchaseOrderId);  //   新增方法
+    boolean updateStatusById(Integer orderId, String status);
+
 }
