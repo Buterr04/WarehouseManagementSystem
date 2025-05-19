@@ -6,7 +6,7 @@
       <el-date-picker v-model="searchForm.orderDate" type="date" placeholder="按下单日期搜索" clearable style="width: 180px; margin-right: 10px;" />
       <el-select v-model="searchForm.status" placeholder="按订单状态搜索" clearable style="width: 180px; margin-right: 10px;">
         <el-option label="待收货" :value="0" />
-        <el-option label="已完成" :value="1" />
+        <el-option label="已到货" :value="1" />
         <el-option label="部分缺货" :value="2" />
       </el-select>
       <el-button @click="fetchOrderList">查询</el-button>
