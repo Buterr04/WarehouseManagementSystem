@@ -3,7 +3,9 @@ package com.dai.wms.mapper;
 import com.dai.wms.entity.StockIn;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
 
@@ -30,4 +32,8 @@ public interface StockInMapper extends BaseMapper<StockIn> {
             "JOIN purchase_order po ON si.order_id = po.order_id " +
             "WHERE si.stock_in_id = #{stockInId}")
     StockIn selectStockInWithDetails(Integer stockInId);
+
+    @Update("UPDATE stock_in SET status = #{status} WHERE stock_in_id = #{stockInId}")
+    void updateStatusById(@Param("stockInId") Integer stockInId, @Param("status") String status);
+
 }

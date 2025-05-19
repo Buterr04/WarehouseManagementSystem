@@ -27,6 +27,7 @@
             <span>库存管理</span>
           </template>
           <el-menu-item index="/inventory-management/inventory-in">入库管理</el-menu-item>
+          <el-menu-item index="/inventory-management/return-management">退货管理</el-menu-item>
           <el-menu-item index="/inventory-management/inventory-out">出库管理</el-menu-item>
           <el-menu-item index="/inventory-management/inventory-view">库存查询</el-menu-item>
         </el-sub-menu>

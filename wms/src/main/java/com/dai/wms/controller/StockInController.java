@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -95,5 +96,15 @@ public class StockInController {
         List<StockInItem> items = stockInItemService.getStockInItemsWithProductInfo(stockInId);
         return Result.success(items);
     }
+
+    @PostMapping("/updateStatus")
+    public Result updateStatus(@RequestBody Map<String, Object> data) {
+        Integer stockInId = (Integer) data.get("stockInId");
+        String status = (String) data.get("status");
+
+        boolean success = stockInService.updateStatusById(stockInId, status);
+        return success ? Result.success() : Result.fail();
+    }
+
 
 }

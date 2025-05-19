@@ -39,7 +39,7 @@ public class CodeGenerator {
         GlobalConfig gc = new GlobalConfig();
         // 将生成的代码放在根目录的wms文件夹（专门存放后端代码）下
         String projectPath = System.getProperty("user.dir");
-        gc.setOutputDir(projectPath + "/src/main/java");
+        gc.setOutputDir(projectPath + "/wms/src/main/java");
         gc.setAuthor("dai");
         gc.setOpen(false);
         gc.setSwagger2(true);  // 实体属性 Swagger2 注解

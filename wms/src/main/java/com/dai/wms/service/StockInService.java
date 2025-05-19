@@ -20,4 +20,6 @@ public interface StockInService extends IService<StockIn> {
     List<StockIn> list();
     StockIn findByIdWithItems(Integer stockInId);
     StockIn getStockInWithDetails(Integer stockInId);  //   新增方法
+    boolean updateStatusById(Integer stockInId, String status);
+
 }

@@ -90,4 +90,10 @@ public class StockInServiceImpl extends ServiceImpl<StockInMapper, StockIn> impl
     public StockIn getStockInWithDetails(Integer stockInId) {
         return stockInMapper.selectStockInWithDetails(stockInId);  //   新增方法的实现
     }
+
+    @Override
+    public boolean updateStatusById(Integer stockInId, String status) {
+        stockInMapper.updateStatusById(stockInId, status);
+        return true;
+    }
 }

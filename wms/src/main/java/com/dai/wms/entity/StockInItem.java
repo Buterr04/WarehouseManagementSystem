@@ -38,5 +38,6 @@ public class StockInItem implements Serializable {
 
     private String specifications; // 规格，非数据库字段，用于前端展示
 
+    private Integer stockQuantity; // 库存数量，非数据库字段，用于前端展示
 
 }

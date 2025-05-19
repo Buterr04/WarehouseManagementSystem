@@ -11,6 +11,8 @@ import CustomerMangement from "@/views/CustomerMangement.vue";
 import SalesOrderModify from "@/views/SalesOrderModify.vue";
 import InventoryManagement from "@/views/InventoryManagement.vue";
 import SupplierManagement from "@/views/SupplierManagement.vue";
+import CreatePurchaseOrder from "@/views/PurchaseOrderForm.vue";
+import ReturnManagement from "@/views/ReturnManagement.vue";
 
 const routes = [
     { path: '/', name: 'home', component: HomePage }, // 将根路径指向 HomePage
@@ -20,6 +22,7 @@ const routes = [
         children: [
             { path: 'purchase-plan', name: 'purchase-plan', component: PurchasePlan },
             { path: 'purchase-order', name: 'purchase-order', component: PurchaseOrder },
+            { path: 'create-purchase-order', name: 'create-purchase-order', component: CreatePurchaseOrder },
             { path: 'supplier-management', name: 'supplier-management', component: SupplierManagement },
         ],
     },
@@ -29,6 +32,7 @@ const routes = [
             { path: 'inventory-in', name: 'inventory-in', component: InventoryIn },
             { path: 'inventory-out', name: 'inventory-out', component: InventoryOut },
             { path: 'inventory-view', name: 'inventory-management', component: InventoryManagement },
+            { path: 'return-management', name: 'return-management', component: ReturnManagement },
         ],
     },
     {

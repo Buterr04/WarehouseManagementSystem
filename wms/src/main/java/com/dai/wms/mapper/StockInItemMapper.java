@@ -23,7 +23,7 @@ public interface StockInItemMapper extends BaseMapper<StockInItem> {
     List<StockInItem> selectStockInItemsByStockInId(@Param("stockInId") Integer stockInId);
 
     //   新增方法：根据入库单 ID 查询明细，并包含商品信息
-    @Select("SELECT sii.stock_in_item_id, sii.stock_in_id, sii.product_id, p.product_name, p.specifications, sii.quantity, sii.accepted_quantity " +
+    @Select("SELECT sii.stock_in_item_id, sii.stock_in_id, sii.product_id, p.product_name, p.specifications, sii.quantity, sii.accepted_quantity, p.stock_quantity " +
             "FROM stock_in_item sii " +
             "JOIN product p ON sii.product_id = p.product_id " +
             "WHERE sii.stock_in_id = #{stockInId}")
