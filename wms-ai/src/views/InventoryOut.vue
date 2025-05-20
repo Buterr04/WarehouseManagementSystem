@@ -152,7 +152,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, nextTick } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 
 const outboundOrderList = ref([]);
@@ -319,13 +319,16 @@ const fetchSalesOrderItems = async (salesOrderId) => {
   }
 };
 
+// 修改 showOutboundForm 方法
 const showOutboundForm = async (row) => {
   saveOutboundFormVisible.value = false;
   outboundForm.value = { salesOrderId: row.salesOrderId, items: [] };
-  await fetchSalesOrderItems(row.salesOrderId);
-  // ✅ 打印调试一次，避免重复加载
-  console.log('🧾 明细已加载：', outboundForm.value.items);
   saveOutboundFormVisible.value = true;
+
+  // 使用 nextTick 延迟加载
+  await nextTick();
+  await fetchSalesOrderItems(row.salesOrderId);
+  console.log('🧾 明细已加载：', outboundForm.value.items);
 };
 
 const saveOutboundOrder = async () => {

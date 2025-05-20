@@ -19,7 +19,7 @@ import java.util.List;
 @Mapper
 public interface ProductMapper extends BaseMapper<Product> {
 
-    @Select("SELECT p.product_id, p.product_name, p.specifications, p.unit_price, p.supplier_id, s.supplier_name " +
+    @Select("SELECT p.product_id, p.product_name, p.specifications, p.unit_price, p.stock_quantity, p.supplier_id, s.supplier_name " +
             "FROM product p " +
             "LEFT JOIN supplier s ON p.supplier_id = s.supplier_id")
     List<Product> findAllWithSupplier();
