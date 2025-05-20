@@ -3,6 +3,9 @@ package com.dai.wms.mapper;
 import com.dai.wms.entity.Product;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
 
 /**
  * <p>
@@ -16,4 +19,8 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface ProductMapper extends BaseMapper<Product> {
 
+    @Select("SELECT p.product_id, p.product_name, p.specifications, p.unit_price, p.supplier_id, s.supplier_name " +
+            "FROM product p " +
+            "LEFT JOIN supplier s ON p.supplier_id = s.supplier_id")
+    List<Product> findAllWithSupplier();
 }

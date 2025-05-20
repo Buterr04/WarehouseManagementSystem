@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dai.wms.common.QueryPageParam;
 import com.dai.wms.common.Result;
 import com.dai.wms.entity.Product;
+import com.dai.wms.mapper.ProductMapper;
 import com.dai.wms.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -30,10 +31,13 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
+    @Autowired
+    private ProductMapper productMapper;
+
     // 查
     @GetMapping("/list")
     public List<Product> list() {
-        return productService.list();
+        return productMapper.findAllWithSupplier();
     }
 
     // 增

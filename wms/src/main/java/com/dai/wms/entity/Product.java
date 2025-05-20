@@ -36,5 +36,9 @@ public class Product implements Serializable {
 
     private Integer stockQuantity;
 
+    private Integer supplierId;
+
+    private String supplierName; // 非数据库字段，用于前端展示
+
 
 }
