@@ -48,7 +48,7 @@ public class User implements Serializable {
     @ApiModelProperty(value = "phone number")
     private String phone;
 
-    @ApiModelProperty(value = "role, 0-owner, 1-administrator, 2-user")
+    @ApiModelProperty(value = "role, 0-administrator, 1-seller, 2-stockkeeper, 3-purchaser")
     private Integer roleId;
 
 

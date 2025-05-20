@@ -2,6 +2,7 @@ package com.dai.wms.controller;
 
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -96,10 +97,28 @@ public class UserController {
         return Result.success(res.getTotal(), res.getRecords());
     }
 
-    //按照id查询
+    // 按照id查询
     @GetMapping("/findByNo")
     public Result findByNo(@RequestParam String no) {
         List<User> list = userService.lambdaQuery().eq(User::getNo, no).list();
         return list.size()>0 ? Result.success(list) : Result.fail();
     }
+
+    // 登录
+    @PostMapping("/login")
+    public Result login(@RequestBody User loginUser) {
+        QueryWrapper<User> query = new QueryWrapper<>();
+        query.eq("no", loginUser.getNo());
+        query.eq("password", loginUser.getPassword());
+
+        User user = userService.getOne(query);
+
+        if (user != null) {
+            return Result.success(user);  // ✅ 这句确保 data 不为 null
+        } else {
+            return Result.fail();  // 或者带上 msg：Result.result(400, "用户名或密码错误", 0L, null)
+        }
+    }
+
+
 }
