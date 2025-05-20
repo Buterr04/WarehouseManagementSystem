@@ -46,9 +46,9 @@ const handleLogin = async () => {
       localStorage.setItem('user', JSON.stringify(data.data));
 
       router.push('/').then(() => {
-        location.reload(); // ✅ 强制刷新所有状态
+        location.reload(); //  强制刷新所有状态
       });
-      return; // ✅ 登录成功后直接 return
+      return; //  登录成功后直接 return
     } else {
       ElMessage.error(data.msg || '登录失败');
     }

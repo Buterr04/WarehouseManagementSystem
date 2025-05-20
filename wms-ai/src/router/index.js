@@ -14,11 +14,18 @@ import SupplierManagement from "@/views/SupplierManagement.vue";
 import CreatePurchaseOrder from "@/views/PurchaseOrderForm.vue";
 import ReturnManagement from "@/views/ReturnManagement.vue";
 import LoginPage from "@/views/LoginPage.vue";
+import UserManagement from "@/views/UserManagement.vue";
 
 const routes = [
     { path: '/login', name: 'login', component: LoginPage },
     { path: '/', name: 'home', component: HomePage }, // 将根路径指向 HomePage
     { path: '/product-management', name: 'product-management', component: ProductManagement },
+    {
+        path: '/system-management',
+        children: [
+            { path: 'user-management', name: 'user-management', component: UserManagement, meta: { role: 0 } },
+        ],
+    },
     {
         path: '/purchase-management',
         children: [
@@ -53,18 +60,22 @@ const router = createRouter({
     routes,
 });
 
-export default router;
-
 router.beforeEach((to, from, next) => {
-    const user = JSON.parse(localStorage.getItem('user') || 'null'); // ⚠️ 兼容 null
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
 
-    // 未登录：拦截除登录页以外的所有页面
+    // 未登录拦截
     if (!user && to.path !== '/login') {
         return next('/login');
     }
 
-    // 有角色限制的页面，且角色不匹配时拦截
-    if (to.meta.role && user && user.roleId !== 0 && to.meta.role !== user.roleId) {
+    // 遍历所有匹配的路由记录，获取需要的角色权限
+    const requiredRole = to.matched.find(r => r.meta?.role)?.meta.role;
+
+    console.log('to.path:', to.path, 'requiredRole:', requiredRole, 'user roleId:', user?.roleId);
+
+
+    // 如果该页面有限制，且当前用户不是超级管理员也不是匹配角色，则禁止访问
+    if (requiredRole !== undefined && user && user.roleId !== 0 && user.roleId !== requiredRole) {
         alert('无权限访问该页面');
         return next(false);
     }
@@ -72,3 +83,5 @@ router.beforeEach((to, from, next) => {
     next();
 });
 
+
+export default router;

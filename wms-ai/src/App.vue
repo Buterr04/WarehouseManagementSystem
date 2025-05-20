@@ -64,6 +64,13 @@
           </span>
           <template #dropdown>
             <el-dropdown-item command="info">个人信息</el-dropdown-item>
+            <el-dropdown-item
+                v-if="roleId === 0"
+                command="/system-management/user-management"
+            >
+              用户管理
+            </el-dropdown-item>
+
             <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
           </template>
         </el-dropdown>
@@ -105,10 +112,13 @@ const isMenuDisabled = (requiredRole) => {
 // 退出登录处理
 const handleDropdown = (command) => {
   if (command === 'logout') {
-    setUser(null); // 清空用户信息
+    setUser(null);
     router.push('/login');
+  } else if (typeof command === 'string' && command.startsWith('/')) {
+    router.push(command);
   }
 };
+
 </script>
 
 <style scoped>

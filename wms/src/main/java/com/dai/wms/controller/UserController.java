@@ -32,9 +32,21 @@ public class UserController {
     private UserService userService;
 
     @GetMapping("/list")
-    public List<User> list() {
-        return userService.list();
+    public Result list(@RequestParam(required = false) String no,
+                       @RequestParam(required = false) String name) {
+
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        if (no != null && !no.isEmpty()) {
+            wrapper.like("no", no);
+        }
+        if (name != null && !name.isEmpty()) {
+            wrapper.like("name", name);
+        }
+
+        List<User> users = userService.list(wrapper);
+        return Result.success((long) users.size(), users);  // 返回标准格式
     }
+
 
     // 增
     @PostMapping("/save")
