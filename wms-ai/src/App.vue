@@ -21,7 +21,7 @@
             <el-icon><i class="el-icon-shopping-cart-2" /></el-icon>
             <span>采购管理</span>
           </template>
-          <el-menu-item index="/purchase-management/purchase-plan" :disabled="isMenuDisabled(3)">采购计划</el-menu-item>
+
           <el-menu-item index="/purchase-management/purchase-order" :disabled="isMenuDisabled(3)">采购订单</el-menu-item>
           <el-menu-item index="/purchase-management/supplier-management" :disabled="isMenuDisabled(3)">供应商管理</el-menu-item>
         </el-sub-menu>
@@ -33,8 +33,8 @@
             <span>库存管理</span>
           </template>
           <el-menu-item index="/inventory-management/inventory-in" :disabled="isMenuDisabled(2)">入库管理</el-menu-item>
-          <el-menu-item index="/inventory-management/return-management" :disabled="isMenuDisabled(2)">退货管理</el-menu-item>
           <el-menu-item index="/inventory-management/inventory-out" :disabled="isMenuDisabled(2)">出库管理</el-menu-item>
+          <el-menu-item index="/inventory-management/purchase-plan" :disabled="isMenuDisabled(2)">采购申请</el-menu-item>
           <el-menu-item index="/inventory-management/inventory-view" :disabled="isMenuDisabled(2)">库存查询</el-menu-item>
         </el-sub-menu>
 

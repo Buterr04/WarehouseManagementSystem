@@ -29,7 +29,6 @@ const routes = [
     {
         path: '/purchase-management',
         children: [
-            { path: 'purchase-plan', name: 'purchase-plan', component: PurchasePlan, meta: { role: 3 }  },
             { path: 'purchase-order', name: 'purchase-order', component: PurchaseOrder, meta: { role: 3 }  },
             { path: 'create-purchase-order', name: 'create-purchase-order', component: CreatePurchaseOrder, meta: { role: 3 }  },
             { path: 'supplier-management', name: 'supplier-management', component: SupplierManagement, meta: { role: 3 }  },
@@ -38,6 +37,7 @@ const routes = [
     {
         path: '/inventory-management',
         children: [
+            { path: 'purchase-plan', name: 'purchase-plan', component: PurchasePlan, meta: { role: 2 }  },
             { path: 'inventory-in', name: 'inventory-in', component: InventoryIn, meta: { role: 2 }  },
             { path: 'inventory-out', name: 'inventory-out', component: InventoryOut, meta: { role: 2 }  },
             { path: 'inventory-view', name: 'inventory-management', component: InventoryManagement, meta: { role: 2 }  },
