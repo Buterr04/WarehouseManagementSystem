@@ -51,6 +51,16 @@
     />
 
     <el-dialog v-model="dialogVisible" title="销售单明细" width="60%">
+      <!-- 信息栏：销售单号、客户名称、销售日期 -->
+      <div style="margin-bottom: 15px;">
+        <el-row :gutter="20">
+          <el-col :span="8"><strong>销售单号：</strong>{{ salesOrderInfo.salesOrderId }}</el-col>
+          <el-col :span="8"><strong>客户名称：</strong>{{ salesOrderInfo.customerName }}</el-col>
+          <el-col :span="8"><strong>销售日期：</strong>{{ salesOrderInfo.saleDate }}</el-col>
+        </el-row>
+      </div>
+
+      <!-- 原表格不变 -->
       <el-table :data="salesOrderDetails" style="width: 100%">
         <el-table-column prop="productName" label="商品名称(规格)">
           <template #default="scope">
@@ -69,15 +79,18 @@
           </template>
         </el-table-column>
       </el-table>
+
       <div style="text-align: right; margin-top: 10px;">
         总价: <strong style="font-size: 1.2em;">{{ formatCurrency(totalPrice) }}</strong>
       </div>
+
       <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">关闭</el-button>
-        </span>
+    <span class="dialog-footer">
+      <el-button @click="dialogVisible = false">关闭</el-button>
+    </span>
       </template>
     </el-dialog>
+
   </div>
 </template>
 
@@ -91,6 +104,13 @@ const salesOrderList = ref([]);
 const dialogVisible = ref(false);
 const salesOrderDetails = ref([]);
 const currentSalesOrderId = ref(null);
+
+const salesOrderInfo = ref({
+  salesOrderId: '',
+  customerName: '',
+  saleDate: '',
+});
+
 
 // 搜索表单
 const searchQuery = ref({
@@ -212,10 +232,19 @@ const deleteSalesOrder = (id) => {
 };
 
 const viewSalesOrderDetails = (id) => {
+  const order = salesOrderList.value.find(o => o.salesOrderId === id);
+  if (order) {
+    salesOrderInfo.value = {
+      salesOrderId: order.salesOrderId,
+      customerName: order.customerName,
+      saleDate: order.saleDate,
+    };
+  }
   currentSalesOrderId.value = id;
   fetchSalesOrderDetailsForView(id);
   dialogVisible.value = true;
 };
+
 </script>
 
 <style scoped>

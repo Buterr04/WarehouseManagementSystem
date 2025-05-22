@@ -45,6 +45,16 @@
     />
 
     <el-dialog v-model="dialogVisible" title="出库单明细" width="60%">
+      <!-- 信息栏：出库单号、销售单号、出库日期 -->
+      <div style="margin-bottom: 15px;">
+        <el-row :gutter="20">
+          <el-col :span="8"><strong>出库单号：</strong>{{ outboundInfo.stockOutId }}</el-col>
+          <el-col :span="8"><strong>销售单号：</strong>{{ outboundInfo.salesOrderId }}</el-col>
+          <el-col :span="8"><strong>出库日期：</strong>{{ outboundInfo.stockOutDate }}</el-col>
+        </el-row>
+      </div>
+
+      <!-- 原始表格 -->
       <el-table :data="outboundDetails" style="width: 100%">
         <el-table-column prop="productId" label="商品 ID"></el-table-column>
         <el-table-column prop="productName" label="商品名称"></el-table-column>
@@ -52,12 +62,14 @@
         <el-table-column prop="quantity" label="出库数量"></el-table-column>
         <el-table-column prop="stockQuantity" label="销售数量"></el-table-column>
       </el-table>
+
       <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">关闭</el-button>
-        </span>
+    <span class="dialog-footer">
+      <el-button @click="dialogVisible = false">关闭</el-button>
+    </span>
       </template>
     </el-dialog>
+
 
     <el-dialog v-model="createOutboundDialogVisible" title="关联销售单创建出库单" width="80%">
       <!-- 新增：销售单过滤条件 -->
@@ -165,6 +177,13 @@ const outboundFormVisible = ref(false);
 const saveOutboundFormVisible = ref(false);
 const outboundForm = ref({ salesOrderId: null, items: [] });
 const searchForm = ref({ stockOutId: '', stockOutDate: null, status: null });
+
+const outboundInfo = ref({
+  stockOutId: '',
+  salesOrderId: '',
+  stockOutDate: '',
+});
+
 
 // 分页相关变量
 const outboundCurrentPage = ref(1);
@@ -479,9 +498,21 @@ const deleteOutbound = (stockOutId) => {
 
 const viewOutboundDetails = (stockOutId) => {
   currentOutboundId.value = stockOutId;
+
+  // 根据出库单 ID 查找对应出库单基本信息
+  const record = outboundOrderList.value.find(o => o.stockOutId === stockOutId);
+  if (record) {
+    outboundInfo.value = {
+      stockOutId: record.stockOutId,
+      salesOrderId: record.salesOrderId,
+      stockOutDate: record.stockOutDate?.slice(0, 10) || '',
+    };
+  }
+
   fetchOutboundDetailsForView(stockOutId);
   dialogVisible.value = true;
 };
+
 
 const fetchOutboundDetailsForView = async (stockOutId) => {
   try {

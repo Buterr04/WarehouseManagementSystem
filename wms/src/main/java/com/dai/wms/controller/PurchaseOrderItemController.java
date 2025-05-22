@@ -26,8 +26,9 @@ public class PurchaseOrderItemController {
     private PurchaseOrderItemService purchaseOrderItemService;
 
     @GetMapping("/list")
-    public List<PurchaseOrderItem> list() {
-        return purchaseOrderItemService.list();
+    public Result list() {
+        List<PurchaseOrderItem> purchaseOrderItemList = purchaseOrderItemService.getAllPurchaseOrderItems();
+        return Result.success(purchaseOrderItemList);
     }
 
     // 增

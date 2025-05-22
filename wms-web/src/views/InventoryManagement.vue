@@ -56,7 +56,14 @@
           <el-input v-model="form.unit"></el-input>
         </el-form-item>
         <el-form-item label="库存数量">
-          <el-input v-model="form.stockQuantity"></el-input>
+          <el-input-number
+              v-model="form.stockQuantity"
+              :min="0"
+              :step="1"
+              :controls="true"
+              placeholder="请输入库存数量"
+              style="width: 100%;"
+          />
         </el-form-item>
       </el-form>
       <template #footer>

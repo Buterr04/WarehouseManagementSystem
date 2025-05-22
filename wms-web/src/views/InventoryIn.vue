@@ -29,6 +29,16 @@
 
     <!-- 入库明细查看 -->
     <el-dialog v-model="dialogVisible" title="入库明细" width="60%" @open="adjustDialogSize">
+      <!-- 信息栏：入库单号、采购订单号、入库时间 -->
+      <div style="margin-bottom: 15px;">
+        <el-row :gutter="20">
+          <el-col :span="8"><strong>入库单号：</strong>{{ stockInInfo.stockInId }}</el-col>
+          <el-col :span="8"><strong>采购订单号：</strong>{{ stockInInfo.orderId }}</el-col>
+          <el-col :span="8"><strong>入库时间：</strong>{{ stockInInfo.stockInDate }}</el-col>
+        </el-row>
+      </div>
+
+      <!-- 表格 -->
       <el-table :data="inDetails" style="width: 100%">
         <el-table-column prop="productId" label="商品ID" />
         <el-table-column prop="productName" label="商品名称" />
@@ -36,12 +46,14 @@
         <el-table-column prop="quantity" label="到货数量" />
         <el-table-column prop="acceptedQuantity" label="已入库数量" />
       </el-table>
+
       <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">关闭</el-button>
-        </span>
+    <span class="dialog-footer">
+      <el-button @click="dialogVisible = false">关闭</el-button>
+    </span>
       </template>
     </el-dialog>
+
 
     <!-- 新建入库单弹窗 -->
     <el-dialog v-model="createDialogVisible" title="新建入库单" width="80%">
@@ -153,6 +165,13 @@ const selectedOrderDisplay = ref('');
 const editDialogVisible = ref(false);
 const editForm = ref({ orderId: null, items: [] });
 
+const stockInInfo = ref({
+  stockInId: '',
+  orderId: '',
+  stockInDate: ''
+});
+
+
 // 安全提取
 const extractArray = (data) => Array.isArray(data?.data) ? data.data : [];
 
@@ -216,13 +235,26 @@ const fetchInList = async () => {
 // 查看入库明细
 const viewDetails = async (stockInId) => {
   try {
+    // 设置表头信息
+    const record = inList.value.find(item => item.stockInId === stockInId);
+    if (record) {
+      stockInInfo.value = {
+        stockInId: record.stockInId,
+        orderId: record.orderId,
+        stockInDate: record.stockInDate?.slice(0, 10) || ''
+      };
+    }
+
+    // 加载明细表格
     const res = await fetch(`http://localhost:8090/stock-in/items/${stockInId}`);
     inDetails.value = extractArray(await res.json());
+
     dialogVisible.value = true;
   } catch (e) {
     ElMessage.error('加载入库明细失败');
   }
 };
+
 
 // 打开新建入库单弹窗时，预加载采购订单数据
 const openCreateDialog = async () => {

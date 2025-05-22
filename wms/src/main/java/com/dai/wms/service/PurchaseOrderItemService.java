@@ -17,4 +17,5 @@ public interface PurchaseOrderItemService extends IService<PurchaseOrderItem> {
 
     List<PurchaseOrderItem> getPurchaseOrderItemsByOrderId(Integer purchaseOrderId);
     List<PurchaseOrderItem> getPurchaseOrderItemsWithProductInfo(Integer purchaseOrderId);  //   新增方法
+    List<PurchaseOrderItem> getAllPurchaseOrderItems();
 }

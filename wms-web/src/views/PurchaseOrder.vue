@@ -9,6 +9,7 @@
         <el-option label="已到货" :value="1" />
         <el-option label="部分缺货" :value="2" />
       </el-select>
+      <el-input v-model="searchForm.productName" placeholder="按商品名称搜索" clearable style="width: 200px; margin-right: 10px;" />
       <el-button @click="fetchOrderList">查询</el-button>
       <el-button type="primary" @click="navigateToPurchaseForm">新建采购订单</el-button>
     </div>
@@ -26,23 +27,34 @@
         </template>
       </el-table-column>
     </el-table>
+
     <el-pagination
-      background
-      layout="prev, pager, next"
-      :total="filteredOrderList.length"
-      :page-size="orderPageSize"
-      :current-page="orderCurrentPage"
-      @current-change="handleOrderPageChange"
-      style="margin: 16px 0; text-align: right;"
+        background
+        layout="prev, pager, next"
+        :total="filteredOrderList.length"
+        :page-size="orderPageSize"
+        :current-page="orderCurrentPage"
+        @current-change="handleOrderPageChange"
+        style="margin: 16px 0; text-align: right;"
     />
 
+    <!-- 查看订单弹窗 -->
     <el-dialog v-model="dialogVisible" title="采购订单明细" width="60%">
+      <div style="margin-bottom: 15px;">
+        <el-row :gutter="20">
+          <el-col :span="8"><strong>采购订单号：</strong>{{ orderInfo.orderId }}</el-col>
+          <el-col :span="8"><strong>供应商：</strong>{{ orderInfo.supplierName }}</el-col>
+          <el-col :span="8"><strong>下单日期：</strong>{{ orderInfo.orderDate }}</el-col>
+        </el-row>
+      </div>
+
       <el-table :data="orderDetails" style="width: 100%">
         <el-table-column prop="productId" label="商品ID" />
         <el-table-column prop="productName" label="商品名称" />
         <el-table-column prop="quantity" label="采购数量" />
         <el-table-column prop="receivedQuantity" label="已到货数量" />
       </el-table>
+
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogVisible = false">关闭</el-button>
@@ -50,6 +62,7 @@
       </template>
     </el-dialog>
 
+    <!-- 处理订单弹窗 -->
     <el-dialog v-model="handleDialogVisible" title="确认收货" width="80%">
       <el-table :data="orderForm.items" style="width: 100%">
         <el-table-column prop="productId" label="商品ID" />
@@ -73,57 +86,70 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { useRouter } from 'vue-router'; // 引入 useRouter
+import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 
-const router = useRouter(); // 获取 router 实例
-
+const router = useRouter();
 const orderList = ref([]);
+const allOrderItems = ref([]);
+const orderIdToProductNames = ref(new Map());
 const orderDetails = ref([]);
-const searchForm = ref({ orderId: '', orderDate: null, status: null });
-const orderForm = ref({ supplierId: null, items: [] });
-
 const dialogVisible = ref(false);
 const handleDialogVisible = ref(false);
+const searchForm = ref({
+  orderId: '',
+  orderDate: null,
+  status: null,
+  productName: ''
+});
+const orderForm = ref({ supplierId: null, items: [] });
 
-// 公共函数
-const extractArray = (data) => Array.isArray(data?.data) ? data.data : [];
+const orderInfo = ref({
+  orderId: '',
+  supplierName: '',
+  orderDate: ''
+});
 
-const getStatusText = (status) => {
-  return status === 0 ? '待收货' : status === 1 ? '已完成' : '部分缺货';
-};
-
-// 分页相关
 const orderCurrentPage = ref(1);
 const orderPageSize = ref(10);
 
-// 过滤（如需后续扩展搜索条件）
+// 获取订单状态文字
+const getStatusText = (status) => {
+  return status === 0 ? '待收货' : status === 1 ? '已到货' : '部分缺货';
+};
+
+// 处理分页
+const handleOrderPageChange = (page) => {
+  orderCurrentPage.value = page;
+};
+
+// 筛选订单列表
 const filteredOrderList = computed(() => {
-  // 格式化为 yyyy-MM-dd
   const formatDate = (d) => {
     if (!d) return '';
-    if (typeof d === 'string') {
-      return d.slice(0, 10);
-    }
+    if (typeof d === 'string') return d.slice(0, 10);
     if (d instanceof Date) {
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
+      const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), da = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${da}`;
     }
     return '';
   };
+
   return orderList.value.filter(order => {
-    if (searchForm.value.orderId && !String(order.orderId).includes(searchForm.value.orderId)) {
-      return false;
-    }
+    if (searchForm.value.orderId && !String(order.orderId).includes(searchForm.value.orderId)) return false;
     if (searchForm.value.orderDate) {
-      const searchDateStr = formatDate(searchForm.value.orderDate);
       const orderDateStr = formatDate(order.orderDate);
+      const searchDateStr = formatDate(searchForm.value.orderDate);
       if (orderDateStr !== searchDateStr) return false;
     }
     if (searchForm.value.status !== null && searchForm.value.status !== '' && order.status !== searchForm.value.status) {
       return false;
+    }
+    if (searchForm.value.productName) {
+      const products = orderIdToProductNames.value.get(order.orderId);
+      if (!products) return false;
+      const match = [...products].some(p => p.includes(searchForm.value.productName));
+      if (!match) return false;
     }
     return true;
   });
@@ -131,40 +157,58 @@ const filteredOrderList = computed(() => {
 
 const pagedOrderList = computed(() => {
   const start = (orderCurrentPage.value - 1) * orderPageSize.value;
-  const end = start + orderPageSize.value;
-  return filteredOrderList.value.slice(start, end);
+  return filteredOrderList.value.slice(start, start + orderPageSize.value);
 });
 
-const handleOrderPageChange = (page) => {
-  orderCurrentPage.value = page;
-};
-
-// 查询采购订单列表
+// 拉取采购订单
 const fetchOrderList = async () => {
   try {
     const res = await fetch('http://localhost:8090/purchase-order/list');
     const data = await res.json();
-    orderList.value = extractArray(data).map(o => ({
+    orderList.value = Array.isArray(data.data) ? data.data.map(o => ({
       ...o,
       statusText: getStatusText(o.status),
-    }));
-    orderCurrentPage.value = 1; // 查询后重置页码
+    })) : [];
+    orderCurrentPage.value = 1;
   } catch (err) {
     ElMessage.error('获取订单失败: ' + err.message);
   }
 };
 
-// 导航到 PurchaseForm 页面
-const navigateToPurchaseForm = () => {
-  router.push({ name: 'create-purchase-order' }); // 假设你的 PurchaseForm 路由 name 是 'PurchaseForm'
+// 拉取订单明细项并构建映射
+const fetchAllOrderItems = async () => {
+  try {
+    const res = await fetch('http://localhost:8090/purchase-order-item/list');
+    const data = await res.json();
+    allOrderItems.value = Array.isArray(data.data) ? data.data : [];
+
+    const map = new Map();
+    allOrderItems.value.forEach(item => {
+      if (!item.productName) return;
+      if (!map.has(item.orderId)) map.set(item.orderId, new Set());
+      map.get(item.orderId).add(item.productName);
+    });
+    orderIdToProductNames.value = map;
+  } catch (err) {
+    ElMessage.error('加载订单明细失败: ' + err.message);
+  }
 };
 
-// 查看订单明细
+// 查看订单详情
 const viewOrderDetails = async (orderId) => {
+  const order = orderList.value.find(o => o.orderId === orderId);
+  if (order) {
+    orderInfo.value = {
+      orderId: order.orderId,
+      supplierName: order.supplierName || '未知',
+      orderDate: order.orderDate?.slice(0, 10) || ''
+    };
+  }
+
   try {
     const res = await fetch(`http://localhost:8090/purchase-order/items/${orderId}`);
     const data = await res.json();
-    orderDetails.value = extractArray(data);
+    orderDetails.value = Array.isArray(data.data) ? data.data : [];
     dialogVisible.value = true;
   } catch (err) {
     ElMessage.error('加载订单明细失败: ' + err.message);
@@ -178,10 +222,10 @@ const handleOrder = async (row) => {
     const data = await res.json();
     orderForm.value = {
       orderId: row.orderId,
-      items: extractArray(data).map(i => ({
+      items: Array.isArray(data.data) ? data.data.map(i => ({
         ...i,
-        receivedQuantity: i.quantity,
-      })),
+        receivedQuantity: i.quantity
+      })) : []
     };
     handleDialogVisible.value = true;
   } catch (err) {
@@ -189,6 +233,7 @@ const handleOrder = async (row) => {
   }
 };
 
+// 提交订单处理结果
 const submitOrderHandling = async () => {
   const hasShortage = orderForm.value.items.some(i => i.receivedQuantity < i.quantity);
   const payload = {
@@ -199,11 +244,12 @@ const submitOrderHandling = async () => {
       quantity: i.receivedQuantity,
     })),
   };
+
   try {
     const res = await fetch('http://localhost:8090/purchase-order/modify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(payload)
     });
     const data = await res.json();
     if (data.code === 200) {
@@ -240,5 +286,13 @@ const deleteOrder = (orderId) => {
   });
 };
 
-onMounted(fetchOrderList);
+// 跳转到新建采购单
+const navigateToPurchaseForm = () => {
+  router.push({ name: 'create-purchase-order' });
+};
+
+onMounted(() => {
+  fetchOrderList();
+  fetchAllOrderItems();
+});
 </script>

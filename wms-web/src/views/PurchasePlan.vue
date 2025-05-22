@@ -41,6 +41,16 @@
 
     <!-- 查看计划明细 -->
     <el-dialog v-model="dialogVisible" title="采购计划明细" width="60%">
+      <!-- 信息栏：出库单号、供应商名称、日期 -->
+      <div style="margin-bottom: 15px;">
+        <el-row :gutter="20">
+          <el-col :span="8"><strong>计划单号：</strong>{{ detailInfo.planId }}</el-col>
+          <el-col :span="8"><strong>出库单号：</strong>{{ detailInfo.stockOutId }}</el-col>
+          <el-col :span="8"><strong>日期：</strong>{{ detailInfo.purchaseDate }}</el-col>
+        </el-row>
+      </div>
+
+      <!-- 表格展示 -->
       <el-table :data="planDetails" style="width: 100%">
         <el-table-column prop="productId" label="商品ID" />
         <el-table-column prop="productName" label="商品名称" />
@@ -48,12 +58,15 @@
         <el-table-column prop="planQuantity" label="计划数量" />
         <el-table-column prop="stockQuantity" label="当前库存" />
       </el-table>
+
+      <!-- 底部按钮 -->
       <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">关闭</el-button>
-        </span>
+    <span class="dialog-footer">
+      <el-button @click="dialogVisible = false">关闭</el-button>
+    </span>
       </template>
     </el-dialog>
+
 
     <!-- 新建采购计划：选择缺货出库单 -->
     <el-dialog v-model="createPlanDialogVisible" title="关联出库单创建采购计划" width="80%">
@@ -138,6 +151,12 @@ const stockOutShortageList = ref([]);
 
 // 新增：出库单过滤表单
 const stockOutSearchForm = ref({ stockOutDate: null });
+
+const detailInfo = ref({
+  planId: null,
+  stockOutId: '',
+  purchaseDate: '',
+});
 
 // 新增：过滤后的出库单列表
 const filteredStockOutShortageList = computed(() => {
@@ -250,8 +269,19 @@ const viewPlanDetails = async (planId) => {
   const res = await fetch(`http://localhost:8090/purchase-plan/items/${planId}`);
   const data = await res.json();
   planDetails.value = data.data;
+
+  const plan = planList.value.find(p => p.planId === planId);
+  if (plan) {
+    detailInfo.value = {
+      planId: plan.planId || '',
+      stockOutId: plan.stockOutId || '',
+      purchaseDate: plan.purchaseDate?.slice(0, 10) || '',
+    };
+  }
+
   dialogVisible.value = true;
 };
+
 
 // 打开“选择缺货出库单”
 const openCreatePlanDialog = async () => {

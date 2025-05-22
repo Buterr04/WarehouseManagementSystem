@@ -55,8 +55,8 @@
         <el-form-item label="商品规格">
           <el-input v-model="form.category" />
         </el-form-item>
-        <el-form-item label="价格">
-          <el-input v-model="form.unit" />
+        <el-form-item label="价格" prop="unit">
+          <el-input-number v-model="form.unit" :min="0.01" placeholder="请输入价格" style="width: 100%;" />
         </el-form-item>
         <el-form-item label="供应商">
           <el-select v-model="form.supplierId" placeholder="请选择供应商">

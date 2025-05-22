@@ -43,7 +43,7 @@
     />
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="30%">
-      <el-form :model="form" :rules="formRules" ref="formRef" label-width="80px">
+      <el-form :model="form" :rules="formRules" ref="formRef" label-width="100px">
         <el-form-item label="供应商名称" prop="supplierName">
           <el-input v-model="form.supplierName"></el-input>
         </el-form-item>

@@ -31,4 +31,9 @@ public class PurchaseOrderItemServiceImpl extends ServiceImpl<PurchaseOrderItemM
     public List<PurchaseOrderItem> getPurchaseOrderItemsWithProductInfo(Integer purchaseOrderId) {
         return purchaseOrderItemMapper.selectPurchaseOrderItemsWithProductInfo(purchaseOrderId);  //   新增方法的实现
     }
+
+    @Override
+    public List<PurchaseOrderItem> getAllPurchaseOrderItems() {
+        return purchaseOrderItemMapper.selectAllPurchaseOrderItems();
+    }
 }

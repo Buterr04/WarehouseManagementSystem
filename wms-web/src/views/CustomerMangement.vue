@@ -22,7 +22,13 @@
       <el-table-column prop="customerId" label="ID" width="80"></el-table-column>
       <el-table-column prop="customerName" label="客户名称"></el-table-column>
       <el-table-column prop="contactPhone" label="联系电话"></el-table-column>
-      <el-table-column prop="contactAddress" label="联系地址"></el-table-column>
+      <el-table-column
+          prop="contactAddress"
+          label="联系地址"
+          show-overflow-tooltip
+      >
+      </el-table-column>
+
       <el-table-column label="操作" width="200">
         <template #default="scope">
           <el-button size="small" @click="editItem(scope.row)">编辑</el-button>
@@ -89,7 +95,7 @@ const editingId = ref(null);
 const searchQuery = ref({ customerName: '', contactPhone: '' });
 
 const currentPage = ref(1);
-const pageSize = ref(9);
+const pageSize = ref(8);
 
 const fetchCustomerList = async () => {
   try {
