@@ -1,6 +1,5 @@
 package com.dai.wms.entity;
 
-import java.math.BigDecimal;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import java.io.Serializable;
@@ -15,28 +14,29 @@ import lombok.EqualsAndHashCode;
  * </p>
  *
  * @author dai
- * @since 2025-04-22
+ * @since 2025-05-22
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@ApiModel(value="ReturnOrderItem对象", description="")
-public class ReturnOrderItem implements Serializable {
+@ApiModel(value="DeliveryOrderItem对象", description="")
+public class DeliveryOrderItem implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @TableId(value = "return_item_id", type = IdType.AUTO)
-    private Integer returnItemId;
+    @TableId(value = "delivery_item_id", type = IdType.AUTO)
+    private Integer deliveryItemId;
 
-    private Integer returnId;
+    private Integer deliveryId;
 
     private Integer productId;
 
     private Integer quantity;
 
-    private BigDecimal returnPrice;
+    private Integer shippedQuantity;
 
-    private String productName; // 产品名称非数据库字段
+    private String productName; // 非数据库字段，用于前端展示
 
-    private String specification; // 规格非数据库字段
+    private String specifications; // 非数据库字段，用于前端展示
+
 
 }

@@ -46,6 +46,7 @@
           </template>
           <el-menu-item index="/sales-management/sales-order" :disabled="isMenuDisabled(1)">销售订单</el-menu-item>
           <el-menu-item index="/sales-management/customer-management" :disabled="isMenuDisabled(1)">客户管理</el-menu-item>
+          <el-menu-item index="/sales-management/delivery-order" :disabled="isMenuDisabled(1)">发货单</el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-aside>

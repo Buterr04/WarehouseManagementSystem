@@ -12,9 +12,9 @@ import SalesOrderModify from "@/views/SalesOrderModify.vue";
 import InventoryManagement from "@/views/InventoryManagement.vue";
 import SupplierManagement from "@/views/SupplierManagement.vue";
 import CreatePurchaseOrder from "@/views/PurchaseOrderForm.vue";
-import ReturnManagement from "@/views/ReturnManagement.vue";
 import LoginPage from "@/views/LoginPage.vue";
 import UserManagement from "@/views/UserManagement.vue";
+import DeliveryOrder from "@/views/DeliveryOrder.vue";
 
 const routes = [
     { path: '/login', name: 'login', component: LoginPage },
@@ -41,13 +41,13 @@ const routes = [
             { path: 'inventory-in', name: 'inventory-in', component: InventoryIn, meta: { role: 2 }  },
             { path: 'inventory-out', name: 'inventory-out', component: InventoryOut, meta: { role: 2 }  },
             { path: 'inventory-view', name: 'inventory-management', component: InventoryManagement, meta: { role: 2 }  },
-            { path: 'return-management', name: 'return-management', component: ReturnManagement, meta: { role: 2 }  },
         ],
     },
     {
         path: '/sales-management',
         children: [
             { path: 'sales-order', name: 'sales-order', component: SalesOrder, meta: { role: 1 }  },
+            { path: 'delivery-order', name: 'delivery-order', component: DeliveryOrder, meta: { role: 1 }  },
         ],
     },
     { path: '/sales-order/create', name: 'CreateSalesOrder', component: SalesOrderForm, meta: { role: 1 }  },
