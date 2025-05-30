@@ -32,8 +32,6 @@ public class DeliveryOrderItem implements Serializable {
 
     private Integer quantity;
 
-    private Integer shippedQuantity;
-
     private String productName; // 非数据库字段，用于前端展示
 
     private String specifications; // 非数据库字段，用于前端展示

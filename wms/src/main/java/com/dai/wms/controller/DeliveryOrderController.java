@@ -1,6 +1,8 @@
 package com.dai.wms.controller;
 
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.dai.wms.common.Result;
 import com.dai.wms.entity.DeliveryOrder;
 import com.dai.wms.entity.DeliveryOrderItem;
@@ -28,45 +30,77 @@ public class DeliveryOrderController {
 
     @Autowired
     private DeliveryOrderService deliveryOrderService;
-
     @Autowired
-    private DeliveryOrderItemService deliveryOrderItemService;  // 注入 DeliveryOrderItemService
+    private DeliveryOrderItemService deliveryOrderItemService;
 
-    // 获取发货单列表
     @GetMapping("/list")
     public Result list() {
-        List<DeliveryOrder> deliveryOrderList = deliveryOrderService.list();
-        return Result.success(deliveryOrderList);
+        List<DeliveryOrder> deliveryOrderListWithEmployeeName = deliveryOrderService.getDeliveryOrderListWithEmployeeName();
+        return Result.success(deliveryOrderListWithEmployeeName);
     }
 
-    // 新增发货单及其明细
+    // 增
     @PostMapping("/save")
     public Result save(@RequestBody DeliveryOrder deliveryOrder) {
-        boolean deliveryOrderSaved = deliveryOrderService.saveDeliveryOrderWithItems(deliveryOrder);
+        boolean deliveryOrderSaved = deliveryOrderService.save(deliveryOrder);
 
         if (deliveryOrderSaved) {
+            Integer deliveryId = deliveryOrder.getDeliveryId();
+            List<DeliveryOrderItem> deliveryOrderItems = deliveryOrder.getDeliveryOrderItems();
+            if (deliveryOrderItems != null && !deliveryOrderItems.isEmpty()) {
+                for (DeliveryOrderItem item : deliveryOrderItems) {
+                    item.setDeliveryId(deliveryId);
+                    deliveryOrderItemService.save(item);
+                }
+            }
             return Result.success();
         } else {
             return Result.fail();
         }
     }
 
-    // 修改发货单及其明细
+    // 删
+    @GetMapping("/delete")
+    public Result delete(@RequestParam String id) {
+        return deliveryOrderService.removeById(id) ? Result.success() : Result.fail();
+    }
+
+    // 改
     @PostMapping("/modify")
-    public Result modify(@RequestBody DeliveryOrder deliveryOrder) {
-        boolean deliveryOrderUpdated = deliveryOrderService.updateDeliveryOrderWithItems(deliveryOrder);
+    public Result mod(@RequestBody DeliveryOrder deliveryOrder) {
+        boolean deliveryOrderUpdated = deliveryOrderService.updateById(deliveryOrder);
 
         if (deliveryOrderUpdated) {
+            Integer deliveryId = deliveryOrder.getDeliveryId();
+            List<DeliveryOrderItem> deliveryOrderItems = deliveryOrder.getDeliveryOrderItems();
+            if (deliveryOrderItems != null && !deliveryOrderItems.isEmpty()) {
+                // 先删除与该交货单关联的所有现有明细项
+                LambdaQueryWrapper<DeliveryOrderItem> queryWrapper = new LambdaQueryWrapper<>();
+                queryWrapper.eq(DeliveryOrderItem::getDeliveryId, deliveryId);
+                deliveryOrderItemService.remove(queryWrapper);
+
+                // 然后保存前端传递过来的新明细项
+                for (DeliveryOrderItem item : deliveryOrderItems) {
+                    item.setDeliveryId(deliveryId);
+                    deliveryOrderItemService.save(item);
+                }
+            }
             return Result.success();
         } else {
             return Result.fail();
         }
     }
 
-    // 根据发货单 ID 获取发货单信息
-    @GetMapping("/{deliveryOrderId}")
-    public Result getDeliveryOrder(@PathVariable Integer deliveryOrderId) {
-        DeliveryOrder deliveryOrder = deliveryOrderService.findByIdWithItems(deliveryOrderId);
+    // 新增或修改
+    @PostMapping("saveOrModify")
+    public boolean saveOrModify(@RequestBody DeliveryOrder deliveryOrder) {
+        return deliveryOrderService.saveOrUpdate(deliveryOrder);
+    }
+
+    // 根据ID查询
+    @GetMapping("/{deliveryId}")
+    public Result getDeliveryOrder(@PathVariable Integer deliveryId) {
+        DeliveryOrder deliveryOrder = deliveryOrderService.findByIdWithEmployee(deliveryId);
         if (deliveryOrder != null) {
             return Result.success(deliveryOrder);
         } else {
@@ -74,27 +108,19 @@ public class DeliveryOrderController {
         }
     }
 
-    // 删除发货单
-    @GetMapping("/delete")
-    public Result delete(@RequestParam Integer deliveryOrderId) {
-        return deliveryOrderService.removeById(deliveryOrderId) ? Result.success() : Result.fail();
+    // 根据交货单ID查询明细
+    @GetMapping("/items/{deliveryId}")
+    public Result getDeliveryOrderItemsWithProductInfo(@PathVariable Integer deliveryId) {
+        List<DeliveryOrderItem> itemsWithProductInfo = deliveryOrderItemService.getDeliveryOrderItemsWithProductInfo(deliveryId);
+        return Result.success(itemsWithProductInfo);
     }
 
-    // 获取带详细信息的发货单
-    @GetMapping("/details/{deliveryOrderId}")
-    public Result getDeliveryOrderWithDetails(@PathVariable Integer deliveryOrderId) {
-        DeliveryOrder deliveryOrder = deliveryOrderService.getDeliveryOrderWithDetails(deliveryOrderId);
-        if (deliveryOrder != null) {
-            return Result.success(deliveryOrder);
-        } else {
-            return Result.fail();
-        }
-    }
+    @PostMapping("/updateStatus")
+    public Result updateStatus(@RequestBody Map<String, Object> data) {
+        Integer deliveryId = (Integer) data.get("deliveryId");
+        Integer status = (Integer) data.get("status"); // Assuming status is an Integer for DeliveryOrder
 
-    // 根据发货单 ID 获取明细项及商品信息
-    @GetMapping("/items/{deliveryOrderId}")
-    public Result getDeliveryOrderItemsWithProductInfo(@PathVariable Integer deliveryOrderId) {
-        List<DeliveryOrderItem> items = deliveryOrderItemService.getDeliveryOrderItemsWithProductInfo(deliveryOrderId);
-        return Result.success(items);
+        boolean success = deliveryOrderService.updateStatusById(deliveryId, status);
+        return success ? Result.success() : Result.fail();
     }
 }

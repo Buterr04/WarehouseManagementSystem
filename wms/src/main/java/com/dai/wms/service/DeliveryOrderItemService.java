@@ -15,6 +15,5 @@ import java.util.List;
  */
 public interface DeliveryOrderItemService extends IService<DeliveryOrderItem> {
 
-    List<DeliveryOrderItem> getDeliveryOrderItemsWithProductInfo(Integer deliveryOrderId);
-
+    List<DeliveryOrderItem> getDeliveryOrderItemsWithProductInfo(Integer deliveryId);
 }

@@ -31,8 +31,7 @@
       <el-table :data="deliveryDetails" style="width: 100%">
         <el-table-column prop="productId" label="商品ID" />
         <el-table-column prop="productName" label="商品名称" />
-        <el-table-column prop="quantity" label="订单数量" />
-        <el-table-column prop="shippedQuantity" label="发货数量" />
+        <el-table-column prop="quantity" label="数量" />
       </el-table>
       <template #footer>
         <span class="dialog-footer">
@@ -56,7 +55,7 @@
         <el-table-column prop="quantity" label="出库数量" />
         <el-table-column label="发货数量">
           <template #default="scope">
-            <el-input-number v-model="scope.row.shippedQuantity" :min="0" :max="scope.row.quantity" />
+            <el-input-number v-model="scope.row.quantity" :min="0" :max="scope.row.quantity" />
           </template>
         </el-table-column>
       </el-table>
@@ -132,18 +131,16 @@ const loadStockOutItems = async (stockOutId) => {
 
 const submitDelivery = async () => {
   const payload = {
-    deliveryOrder: {
-      stockOutId: form.value.stockOutId,
-      deliveryDate: new Date().toISOString().slice(0, 10),
-      employeeId: 3,
-      status: 0,
-    },
-    deliveryItems: form.value.items.map(i => ({
+    employeeId: 3,
+    stockOutId: form.value.stockOutId,
+    deliveryDate: new Date().toISOString().slice(0, 10),
+    status: "1", // 或 "0" 视实际业务而定
+    deliveryOrderItems: form.value.items.map(i => ({
       productId: i.productId,
       quantity: i.quantity,
-      shippedQuantity: i.shippedQuantity,
     })),
   };
+
 
   try {
     const res = await fetch('http://localhost:8090/delivery-order/save', {

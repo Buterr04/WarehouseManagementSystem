@@ -31,7 +31,7 @@ public class DeliveryOrder implements Serializable {
     @TableId(value = "delivery_id", type = IdType.AUTO)
     private Integer deliveryId;
 
-    private Integer orderId;
+    private Integer stockOutId;
 
     private LocalDate deliveryDate;
 

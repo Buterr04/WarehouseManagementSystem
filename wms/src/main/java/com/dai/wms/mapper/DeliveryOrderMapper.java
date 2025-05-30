@@ -18,17 +18,18 @@ import java.util.List;
 @Mapper
 public interface DeliveryOrderMapper extends BaseMapper<DeliveryOrder> {
 
-    @Select("SELECT do.delivery_id, do.purchase_order_id, do.employee_id, do.delivery_date, do.status, po.order_date AS OrderDate " +
+    @Select("SELECT do.delivery_id, do.stock_out_id, do.delivery_date, do.employee_id, do.status " +
             "FROM delivery_order do " +
-            "JOIN purchase_order po ON do.purchase_order_id = po.purchase_order_id")
-    List<DeliveryOrder> selectDeliveryOrderListWithOrderDate();
+            "JOIN user e ON do.employee_id = e.id")
+    List<DeliveryOrder> selectDeliveryOrderListWithEmployeeName();
 
-    @Select("SELECT do.delivery_id, do.purchase_order_id, do.employee_id, do.delivery_date, do.status, po.order_date AS OrderDate " +
+    @Select("SELECT do.delivery_id, do.stock_out_id, do.delivery_date, do.employee_id, do.status " +
             "FROM delivery_order do " +
-            "JOIN purchase_order po ON do.purchase_order_id = po.purchase_order_id " +
-            "WHERE do.delivery_id = #{deliveryOrderId}")
-    DeliveryOrder selectDeliveryOrderByIdWithOrderDate(Integer deliveryOrderId);
+            "JOIN user e ON do.employee_id = e.id " +
+            "WHERE do.delivery_id = #{deliveryId}")
+    DeliveryOrder selectDeliveryOrderByIdWithEmployee(Integer deliveryId);
 
-    @Update("UPDATE delivery_order SET status = #{status} WHERE delivery_order_id = #{deliveryOrderId}")
-    void updateStatusById(@Param("deliveryOrderId") Integer deliveryOrderId, @Param("status") String status);
+    @Update("UPDATE delivery_order SET status = #{status} WHERE delivery_id = #{deliveryId}")
+    void updateStatusById(@Param("deliveryId") Integer deliveryId, @Param("status") Integer status);
+
 }

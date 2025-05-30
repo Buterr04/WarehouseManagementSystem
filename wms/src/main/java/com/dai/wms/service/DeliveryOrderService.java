@@ -17,10 +17,9 @@ import java.util.List;
 public interface DeliveryOrderService extends IService<DeliveryOrder> {
 
     boolean saveDeliveryOrderWithItems(DeliveryOrder deliveryOrder);
-
     boolean updateDeliveryOrderWithItems(DeliveryOrder deliveryOrder);
+    boolean updateStatusById(Integer deliveryId, Integer status);
+    List<DeliveryOrder> getDeliveryOrderListWithEmployeeName();
+    DeliveryOrder findByIdWithEmployee(Integer deliveryId);
 
-    DeliveryOrder findByIdWithItems(Integer deliveryOrderId);
-
-    DeliveryOrder getDeliveryOrderWithDetails(Integer deliveryOrderId);
 }

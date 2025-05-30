@@ -2,9 +2,7 @@ package com.dai.wms.mapper;
 
 import com.dai.wms.entity.DeliveryOrderItem;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
@@ -19,9 +17,14 @@ import java.util.List;
 @Mapper
 public interface DeliveryOrderItemMapper extends BaseMapper<DeliveryOrderItem> {
 
-    @Select("SELECT doi.delivery_item_id, doi.delivery_id, doi.product_id, p.product_name, p.specifications, p.stock_quantity, doi.quantity " +
+    @ResultMap("BaseResultMap")
+    @Select("SELECT doi.delivery_item_id, doi.delivery_id, doi.product_id, p.product_name, p.specifications, doi.quantity " +
             "FROM delivery_order_item doi " +
             "JOIN product p ON doi.product_id = p.product_id " +
-            "WHERE doi.delivery_id = #{deliveryOrderId}")
-    List<DeliveryOrderItem> selectDeliveryOrderItemsWithProductInfo(@Param("deliveryOrderId") Integer deliveryOrderId);
+            "WHERE doi.delivery_id = #{deliveryId}")
+    List<DeliveryOrderItem> selectDeliveryOrderItemsWithProductInfo(@Param("deliveryId") Integer deliveryId);
+
+    @Insert("insert into delivery_order_item (delivery_id, product_id, quantity) " +
+            "values (#{deliveryId}, #{productId}, #{quantity})")
+    int insert(DeliveryOrderItem deliveryOrderItem);
 }

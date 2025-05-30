@@ -1,5 +1,6 @@
 package com.dai.wms.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.dai.wms.entity.DeliveryOrder;
 import com.dai.wms.entity.DeliveryOrderItem;
@@ -26,47 +27,65 @@ import java.util.List;
 public class DeliveryOrderServiceImpl extends ServiceImpl<DeliveryOrderMapper, DeliveryOrder> implements DeliveryOrderService {
 
     @Autowired
-    private DeliveryOrderItemService deliveryOrderItemService;
+    private DeliveryOrderMapper deliveryOrderMapper;
+    @Autowired
+    private DeliveryOrderItemMapper deliveryOrderItemMapper;
 
+    @Override
+    public List<DeliveryOrder> getDeliveryOrderListWithEmployeeName() {
+        return deliveryOrderMapper.selectDeliveryOrderListWithEmployeeName();
+    }
+
+    @Override
+    public DeliveryOrder findByIdWithEmployee(Integer deliveryId) {
+        return deliveryOrderMapper.selectDeliveryOrderByIdWithEmployee(deliveryId);
+    }
+
+    @Transactional
     @Override
     public boolean saveDeliveryOrderWithItems(DeliveryOrder deliveryOrder) {
-        boolean saved = this.save(deliveryOrder);
-        if (saved && deliveryOrder.getDeliveryOrderItems() != null) {
-            for (DeliveryOrderItem item : deliveryOrder.getDeliveryOrderItems()) {
-                item.setDeliveryId(deliveryOrder.getDeliveryId());
+        boolean deliveryOrderSaved = this.save(deliveryOrder);
+
+        if (deliveryOrderSaved) {
+            Integer deliveryId = deliveryOrder.getDeliveryId();
+            List<DeliveryOrderItem> deliveryOrderItems = deliveryOrder.getDeliveryOrderItems();
+            if (deliveryOrderItems != null && !deliveryOrderItems.isEmpty()) {
+                for (DeliveryOrderItem item : deliveryOrderItems) {
+                    item.setDeliveryId(deliveryId);
+                    deliveryOrderItemMapper.insert(item);
+                }
             }
-            return deliveryOrderItemService.saveBatch(deliveryOrder.getDeliveryOrderItems());
+            return true;
         }
-        return saved;
+        return false;
     }
 
+    @Transactional
     @Override
     public boolean updateDeliveryOrderWithItems(DeliveryOrder deliveryOrder) {
-        boolean updated = this.updateById(deliveryOrder);
-        if (updated && deliveryOrder.getDeliveryOrderItems() != null) {
-            deliveryOrderItemService.remove(new QueryWrapper<DeliveryOrderItem>().eq("delivery_order_id", deliveryOrder.getDeliveryId()));
-            for (DeliveryOrderItem item : deliveryOrder.getDeliveryOrderItems()) {
-                item.setDeliveryId(deliveryOrder.getDeliveryId());
+        boolean deliveryOrderUpdated = this.updateById(deliveryOrder);
+
+        if (deliveryOrderUpdated) {
+            Integer deliveryId = deliveryOrder.getDeliveryId();
+            LambdaQueryWrapper<DeliveryOrderItem> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(DeliveryOrderItem::getDeliveryId, deliveryId);
+            deliveryOrderItemMapper.delete(queryWrapper);
+
+            List<DeliveryOrderItem> deliveryOrderItems = deliveryOrder.getDeliveryOrderItems();
+            if (deliveryOrderItems != null && !deliveryOrderItems.isEmpty()) {
+                for (DeliveryOrderItem item : deliveryOrderItems) {
+                    item.setDeliveryId(deliveryId);
+                    deliveryOrderItemMapper.insert(item);
+                }
             }
-            return deliveryOrderItemService.saveBatch(deliveryOrder.getDeliveryOrderItems() );
+            return true;
         }
-        return updated;
+        return false;
     }
 
     @Override
-    public DeliveryOrder findByIdWithItems(Integer deliveryOrderId) {
-        DeliveryOrder order = this.getById(deliveryOrderId);
-        if (order != null) {
-            List<DeliveryOrderItem> items = deliveryOrderItemService.list(
-                    new QueryWrapper<DeliveryOrderItem>().eq("delivery_order_id", deliveryOrderId)
-            );
-            order.setDeliveryOrderItems(items);
-        }
-        return order;
-    }
-
-    @Override
-    public DeliveryOrder getDeliveryOrderWithDetails(Integer deliveryOrderId) {
-        return this.baseMapper.selectDeliveryOrderByIdWithOrderDate(deliveryOrderId);
+    public boolean updateStatusById(Integer deliveryId, Integer status) {
+        deliveryOrderMapper.updateStatusById(deliveryId, status);
+        return true;
     }
 }
