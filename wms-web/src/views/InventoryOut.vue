@@ -25,7 +25,7 @@
           <el-button
               size="small"
               @click="handleOutbound(scope.row)"
-              :disabled="scope.row.status === 1"
+              :disabled="scope.row.status === 1 || scope.row.status === 6"
           >
             处理
           </el-button>
@@ -482,7 +482,7 @@ const confirmNormalOutbound = async () => {
   await fetchOutboundOrderList();
 };
 
-const getStatusText = (status) => status === 0 ? '待处理' : status === 1 ? '已出库' : status === 2 ? '缺货' : "已请求采购" ;
+const getStatusText = (status) => status === 0 ? '待处理' : status === 1 ? '已出库' : status === 2 ? '缺货' : status === 6 ? '已发货': "已请求采购" ;
 
 const deleteOutbound = (stockOutId) => {
   ElMessageBox.confirm('确定要删除此出库单吗?', '警告', {
