@@ -11,7 +11,7 @@
  Target Server Version : 80041 (8.0.41)
  File Encoding         : 65001
 
- Date: 20/05/2025 23:12:52
+ Date: 04/06/2025 17:24:41
 */
 
 SET NAMES utf8mb4;
@@ -27,24 +27,40 @@ CREATE TABLE `customer` (
   `contact_phone` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin DEFAULT NULL,
   `contact_address` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin DEFAULT NULL,
   PRIMARY KEY (`customer_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=117 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
 
 -- ----------------------------
--- Table structure for menu
+-- Table structure for delivery_order
 -- ----------------------------
-DROP TABLE IF EXISTS `menu`;
-CREATE TABLE `menu` (
-  `id` int NOT NULL,
-  `menuCode` varchar(8) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin DEFAULT NULL,
-  `menuName` varchar(16) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin DEFAULT NULL,
-  `menuLevel` varchar(2) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin DEFAULT NULL,
-  `menuParentCode` varchar(8) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin DEFAULT NULL,
-  `menuClick` varchar(16) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin DEFAULT NULL,
-  `menuRight` varchar(16) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin DEFAULT NULL,
-  `menuComponent` varchar(200) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin DEFAULT NULL,
-  `menuIcon` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
+DROP TABLE IF EXISTS `delivery_order`;
+CREATE TABLE `delivery_order` (
+  `delivery_id` int NOT NULL AUTO_INCREMENT COMMENT '发货单ID',
+  `stock_out_id` int DEFAULT NULL COMMENT '关联的订单ID (销售单或出库单)',
+  `delivery_date` date NOT NULL COMMENT '发货日期',
+  `employee_id` int DEFAULT NULL COMMENT '操作员ID',
+  `status` int DEFAULT '0' COMMENT '发货状态：0-待处理，1-已发货，2-异常',
+  PRIMARY KEY (`delivery_id`),
+  KEY `stock_out_id` (`stock_out_id`),
+  KEY `employee_id` (`employee_id`),
+  CONSTRAINT `delivery_order_ibfk_1` FOREIGN KEY (`stock_out_id`) REFERENCES `stock_out` (`stock_out_id`),
+  CONSTRAINT `delivery_order_ibfk_user` FOREIGN KEY (`employee_id`) REFERENCES `user` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='发货单主表';
+
+-- ----------------------------
+-- Table structure for delivery_order_item
+-- ----------------------------
+DROP TABLE IF EXISTS `delivery_order_item`;
+CREATE TABLE `delivery_order_item` (
+  `delivery_item_id` int NOT NULL AUTO_INCREMENT COMMENT '发货明细项ID',
+  `delivery_id` int NOT NULL COMMENT '所属发货单ID，外键关联delivery_order表',
+  `product_id` int NOT NULL COMMENT '商品ID',
+  `quantity` int NOT NULL COMMENT '发货数量',
+  PRIMARY KEY (`delivery_item_id`),
+  KEY `delivery_id` (`delivery_id`),
+  KEY `product_id` (`product_id`),
+  CONSTRAINT `delivery_order_item_ibfk_1` FOREIGN KEY (`delivery_id`) REFERENCES `delivery_order` (`delivery_id`) ON DELETE CASCADE,
+  CONSTRAINT `delivery_order_item_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='发货单明细表';
 
 -- ----------------------------
 -- Table structure for product
@@ -75,7 +91,7 @@ CREATE TABLE `purchase_order` (
   PRIMARY KEY (`order_id`),
   KEY `supplier_id` (`supplier_id`),
   CONSTRAINT `purchase_order_ibfk_2` FOREIGN KEY (`supplier_id`) REFERENCES `supplier` (`supplier_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
 
 -- ----------------------------
 -- Table structure for purchase_order_item
@@ -92,7 +108,7 @@ CREATE TABLE `purchase_order_item` (
   KEY `product_id` (`product_id`),
   CONSTRAINT `purchase_order_item_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `purchase_order` (`order_id`) ON DELETE CASCADE,
   CONSTRAINT `purchase_order_item_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=53 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
 
 -- ----------------------------
 -- Table structure for purchase_plan
@@ -106,7 +122,7 @@ CREATE TABLE `purchase_plan` (
   PRIMARY KEY (`plan_id`),
   KEY `purchase_plan` (`stock_out_id`),
   CONSTRAINT `purchase_plan` FOREIGN KEY (`stock_out_id`) REFERENCES `stock_out` (`stock_out_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
 
 -- ----------------------------
 -- Table structure for purchase_plan_item
@@ -123,37 +139,7 @@ CREATE TABLE `purchase_plan_item` (
   KEY `product_id` (`product_id`),
   CONSTRAINT `purchase_plan_item_ibfk_1` FOREIGN KEY (`plan_id`) REFERENCES `purchase_plan` (`plan_id`) ON DELETE CASCADE,
   CONSTRAINT `purchase_plan_item_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=51 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
-
--- ----------------------------
--- Table structure for return_order
--- ----------------------------
-DROP TABLE IF EXISTS `return_order`;
-CREATE TABLE `return_order` (
-  `return_id` int NOT NULL AUTO_INCREMENT,
-  `return_date` date NOT NULL,
-  `supplier_id` int NOT NULL,
-  PRIMARY KEY (`return_id`),
-  KEY `supplier_id` (`supplier_id`),
-  CONSTRAINT `return_order_ibfk_1` FOREIGN KEY (`supplier_id`) REFERENCES `supplier` (`supplier_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
-
--- ----------------------------
--- Table structure for return_order_item
--- ----------------------------
-DROP TABLE IF EXISTS `return_order_item`;
-CREATE TABLE `return_order_item` (
-  `return_item_id` int NOT NULL AUTO_INCREMENT,
-  `return_id` int NOT NULL,
-  `product_id` int NOT NULL,
-  `quantity` int NOT NULL,
-  `return_price` decimal(10,2) NOT NULL,
-  PRIMARY KEY (`return_item_id`),
-  KEY `return_id` (`return_id`),
-  KEY `product_id` (`product_id`),
-  CONSTRAINT `return_order_item_ibfk_1` FOREIGN KEY (`return_id`) REFERENCES `return_order` (`return_id`) ON DELETE CASCADE,
-  CONSTRAINT `return_order_item_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=54 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
 
 -- ----------------------------
 -- Table structure for sales_order
@@ -168,7 +154,7 @@ CREATE TABLE `sales_order` (
   PRIMARY KEY (`sales_order_id`),
   KEY `customer_id` (`customer_id`),
   CONSTRAINT `sales_order_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=58 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=67 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
 
 -- ----------------------------
 -- Table structure for sales_order_item
@@ -185,7 +171,7 @@ CREATE TABLE `sales_order_item` (
   KEY `product_id` (`product_id`),
   CONSTRAINT `sales_order_item_ibfk_1` FOREIGN KEY (`sales_order_id`) REFERENCES `sales_order` (`sales_order_id`) ON DELETE CASCADE,
   CONSTRAINT `sales_order_item_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=163 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=178 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
 
 -- ----------------------------
 -- Table structure for stock_in
@@ -202,7 +188,7 @@ CREATE TABLE `stock_in` (
   KEY `employee_id` (`employee_id`),
   CONSTRAINT `stock_in_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `purchase_order` (`order_id`),
   CONSTRAINT `stock_in_ibfk_2` FOREIGN KEY (`employee_id`) REFERENCES `user` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
 
 -- ----------------------------
 -- Table structure for stock_in_item
@@ -219,7 +205,7 @@ CREATE TABLE `stock_in_item` (
   KEY `product_id` (`product_id`),
   CONSTRAINT `stock_in_item_ibfk_1` FOREIGN KEY (`stock_in_id`) REFERENCES `stock_in` (`stock_in_id`) ON DELETE CASCADE,
   CONSTRAINT `stock_in_item_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=77 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=84 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
 
 -- ----------------------------
 -- Table structure for stock_out
@@ -236,7 +222,7 @@ CREATE TABLE `stock_out` (
   KEY `employee_id` (`employee_id`),
   CONSTRAINT `stock_out_ibfk_1` FOREIGN KEY (`sales_order_id`) REFERENCES `sales_order` (`sales_order_id`),
   CONSTRAINT `stock_out_ibfk_2` FOREIGN KEY (`employee_id`) REFERENCES `user` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=53 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
 
 -- ----------------------------
 -- Table structure for stock_out_item
@@ -252,7 +238,7 @@ CREATE TABLE `stock_out_item` (
   KEY `product_id` (`product_id`),
   CONSTRAINT `stock_out_item_ibfk_1` FOREIGN KEY (`stock_out_id`) REFERENCES `stock_out` (`stock_out_id`) ON DELETE CASCADE,
   CONSTRAINT `stock_out_item_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=164 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=176 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
 
 -- ----------------------------
 -- Table structure for supplier
@@ -265,7 +251,7 @@ CREATE TABLE `supplier` (
   `contact_info` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin DEFAULT NULL,
   `address` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin DEFAULT NULL,
   PRIMARY KEY (`supplier_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
 
 -- ----------------------------
 -- Table structure for user
