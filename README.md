@@ -41,7 +41,7 @@ Works with Google Gemini and OpenAI ChatGPT
 
     在IDEA或者任何你熟悉的IDE中打开```wms```文件夹作为maven项目文件夹
 
-    使用```database.db```在本地创建数据库
+    使用```WMS.db```在本地创建数据库
 
     修改```application.yml```符合本地数据库设置
     
@@ -59,3 +59,5 @@ Works with Google Gemini and OpenAI ChatGPT
     ```
 
     然后，在你的浏览器中打开 `http://localhost:8080`
+
+    默认用户信息存储在```user.db```中，你也可以自己在数据库中创建用户信息
