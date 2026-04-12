@@ -1,6 +1,28 @@
-# WarehouseManagementSystem
-
-# 本项目为物流信息系统课程设计项目
+<div align="center">
+  <h1>WarehouseManagementSystem</h1>
+  <p>物流信息系统课程设计项目</p>
+  <p>
+    <a href="https://github.com/Buterr04/WarehouseManagementSystem/releases">
+      <img src="https://img.shields.io/github/release/Buterr04/WarehouseManagementSystem.svg" alt="Release" />
+    </a>
+    <a href="https://github.com/Buterr04/WarehouseManagementSystem/blob/main/LICENSE">
+      <img src="https://img.shields.io/github/license/Buterr04/WarehouseManagementSystem.svg" alt="License" />
+    </a>
+    <a href="https://github.com/Buterr04/WarehouseManagementSystem/issues">
+      <img src="https://img.shields.io/github/issues/Buterr04/WarehouseManagementSystem?color=F48D73" alt="Issues" />
+    </a>
+    <img 
+    src="https://img.shields.io/badge/IDE-IntelliJ%20IDEA-blue?logo=intellijidea&logoColor=ffffff" alt="IDE" />
+    <img src="https://img.shields.io/badge/Language-Java%20%26%20JavaScript-orange?logo=java&logoColor=ffffff" alt="Language" />
+    <img src="https://img.shields.io/badge/Framework-Spring%20Boot-green?logo=spring&logoColor=ffffff" alt="Framework" />
+    <img src="https://img.shields.io/badge/Framework-Vue%203-green?logo=vuedotjs&logoColor=ffffff" alt="Framework" />
+    <img src="https://img.shields.io/badge/Framework-Element%20Plus-green?logo=element&logoColor=ffffff" alt="Framework" />
+    <img src="https://img.shields.io/badge/Database-MySQL-blue?logo=mysql&logoColor=ffffff" alt="Database" />
+    <img src="https://img.shields.io/badge/Build-Maven-red?logo=apachemaven&logoColor=ffffff" alt="Build" />
+    
+  </p>
+  <img src="https://socialify.git.ci/Buterr04/WarehouseManagementSystem/image?issues=1&language=1&name=1&owner=1&stargazers=1&theme=Light" alt="WarehouseManagementSystem" />
+</div>
 
 ## 项目背景
 此项目为物流信息系统课程设计项目，项目假设服务于一数码产品线下实体经销商，为该商户提供进销存管理业务

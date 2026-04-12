@@ -33,3 +33,9 @@ target/
 node_modules/
 dist/
 npm-debug.log
+
+# MacOS Files
+.DS_Store
+
+# VS Code Files
+.vscode/
